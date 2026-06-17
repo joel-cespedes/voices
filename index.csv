@@ -1,6 +1,6 @@
 numero,archivo,texto
-1,0001.wav,That helps me get up from my desk and clear my mind.
-2,0002.wav,"I'm in a hurry, please hurry up."
+1,0001.wav,"I'm in a rush, hurry up."
+2,0002.wav,That helps me get up from my desk and clear my mind.
 3,0003.wav,They are the ones with the problem; I'm not doing anything illegal.
 4,0004.wav,"No, that's not going to happen."
 5,0005.wav,"Despite the rain, we went for a walk."
@@ -22,7 +22,7 @@ numero,archivo,texto
 21,0021.wav,I need to shorten these trousers before the wedding.
 22,0022.wav,The teacher will assess the students
 23,0023.wav,I lent him my car for the weekend.
-24,0024.wav,I dare to speak. 
+24,0024.wav,I dare to speak.
 25,0025.wav,No one dared to come forward and tell the truth.
 26,0026.wav,Barça hasn't been beaten this season.
 27,0027.wav,I realized pretty quickly that he was lying.
@@ -35,7 +35,7 @@ numero,archivo,texto
 34,0034.wav,I don't want them to do anything to you.
 35,0035.wav,Can you shorten the meeting to thirty minutes?
 36,0036.wav,He dropped me off at the station before work
-37,0037.wav,You should treat your colleagues with respect. 
+37,0037.wav,You should treat your colleagues with respect.
 38,0038.wav,Don't speak so loudly in the library.
 39,0039.wav,they were speaking loudly
 40,0040.wav,I’m looking for a new flat at the moment.
@@ -248,15 +248,15 @@ numero,archivo,texto
 247,0247.wav,"She overcame difficult times; however, it wasn’t easy to stay motivated"
 248,0248.wav,True wisdom is finding the thrill in learning
 249,0249.wav,i like it but not too much work
-250,0250.wav," I’ll be right back,"
+250,0250.wav,"I’ll be right back,"
 251,0251.wav,"He stands out among his peers; moreover, he exceeds expectations"
 252,0252.wav,They lack experience in this field.
 253,0253.wav,"I'm overwhelmed, so I need help."
 254,0254.wav,The days are getting longer.
 255,0255.wav,He brought a beer rather than wine.
-256,0256.wav,What does that mean? 
+256,0256.wav,What does that mean?
 257,0257.wav,She had to stop by there.
-258,0258.wav, I’m on my way
+258,0258.wav,I’m on my way
 259,0259.wav,Quite a delay
 260,0260.wav,He had a trip and his land was nasty.
 261,0261.wav,Can you have a look at this report?
@@ -277,7 +277,7 @@ numero,archivo,texto
 276,0276.wav,The payment is due next week.
 277,0277.wav,Her peers acknowledge the fact that she stands out
 278,0278.wav,The swap paid off.
-279,0279.wav,I'm reaching out to see if you'd be interested 
+279,0279.wav,I'm reaching out to see if you'd be interested
 280,0280.wav,Hold a confident posture
 281,0281.wav,I came across your achievements in the report.
 282,0282.wav,"If you fight with the team, it will really upset everyone involved."
@@ -450,13 +450,13 @@ numero,archivo,texto
 449,0449.wav,It's Mr. Johnson's.
 450,0450.wav,It's his car.
 451,0451.wav,It's my neighbor's car.
-452,0452.wav, Whose car is parked in the driveway?
+452,0452.wav,Whose car is parked in the driveway?
 453,0453.wav,It’s Anna’s.
 454,0454.wav,It's hers.
 455,0455.wav,It's Anna's jacket.
 456,0456.wav,Whose jacket is hanging by the door?
 457,0457.wav,They are Michael's.
-458,0458.wav, I just spoke with my boss
+458,0458.wav,I just spoke with my boss
 459,0459.wav,They're his.
 460,0460.wav,They are my dad's keys.
 461,0461.wav,Whose keys are these on the floor?
@@ -492,20 +492,20 @@ numero,archivo,texto
 491,0491.wav,The dancers' costumes were designed by a local artisan.
 492,0492.wav,The travelers' luggage was inspected at the border.
 493,0493.wav,The engineer's blueprint was incredibly detailed.
-494,0494.wav,The architect's project was presented on time. 
-495,0495.wav,The workers' tools were in the storage room. 
-496,0496.wav,The company's plans were reviewed yesterday. 
-497,0497.wav,The director's opinion was well received. 
-498,0498.wav,The doctors' suggestions were very helpful. 
+494,0494.wav,The architect's project was presented on time.
+495,0495.wav,The workers' tools were in the storage room.
+496,0496.wav,The company's plans were reviewed yesterday.
+497,0497.wav,The director's opinion was well received.
+498,0498.wav,The doctors' suggestions were very helpful.
 499,0499.wav,The musician's performance was recorded last night.
 500,0500.wav,Fifteen hundred
 501,0501.wav,The children's toys were scattered around the room.
 502,0502.wav,The editor's comment was short and precise
 503,0503.wav,The neighbors' cars were parked outside.
-504,0504.wav,The manager's decision was announced today. 
-505,0505.wav,The company's policy was updated last week. 
-506,0506.wav,The students' responses were very creative. 
-507,0507.wav,The child's toy was under the chair. 
+504,0504.wav,The manager's decision was announced today.
+505,0505.wav,The company's policy was updated last week.
+506,0506.wav,The students' responses were very creative.
+507,0507.wav,The child's toy was under the chair.
 508,0508.wav,My neighbor's garden is full of flowers.
 509,0509.wav,The teacher's instructions were clear.
 510,0510.wav,My friend's idea was very helpful.
@@ -547,7 +547,7 @@ numero,archivo,texto
 546,0546.wav,I went to the concert on Wednesday.
 547,0547.wav,She’s buying a gift for her mother at the shopping centre
 548,0548.wav,thirty eight
-549,0549.wav,"In  2020, we all stayed home."
+549,0549.wav,"In 2020, we all stayed home."
 550,0550.wav,I’m preparing a presentation for the meeting at 10 AM.
 551,0551.wav,I’ll be travelling in March.
 552,0552.wav,He’s really good at solving puzzles.
@@ -614,3 +614,4 @@ numero,archivo,texto
 613,0613.wav,thirty eight
 614,0614.wav,He usually wakes up at sunrise.
 615,0615.wav,I’m heading to the Supermarket to buy some food
+616,0616.wav,The little I've learned I've learned with this Excel
