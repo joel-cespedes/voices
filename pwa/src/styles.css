@@ -1,0 +1,46 @@
+/* Global styles — mobile-first, designed at 380px. */
+:root {
+  --accent: #7c83ff;
+  --bg: #12131f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: #f5f6ff;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  /* Mobile-first canvas, centered and capped on larger screens. */
+  display: flex;
+  justify-content: center;
+}
+
+app-root {
+  width: 100%;
+  max-width: 480px;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -1,1 +1,4 @@
-audios/*.wav
+key.txt
+*.wav
+~$*.xlsx
+__pycache__/

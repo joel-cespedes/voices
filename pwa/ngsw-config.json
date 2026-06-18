@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/favicon.ico", "/index.html", "/manifest.webmanifest", "/*.css", "/*.js"]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/icons/**", "/media/**"]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "phrase-index",
+      "urls": ["https://cdn.jsdelivr.net/gh/joel-cespedes/voices@main/index.csv"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 4,
+        "maxAge": "30d",
+        "timeout": "5s"
+      }
+    },
+    {
+      "name": "audio",
+      "urls": ["https://cdn.jsdelivr.net/gh/joel-cespedes/voices@main/audios/**"],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 700,
+        "maxAge": "365d"
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import os, time, struct, csv, pandas as pd
+import os, sys, time, struct, pandas as pd
 from google import genai
 from google.genai import types
 
@@ -26,7 +26,8 @@ Clear pronunciation, encouraging tone, patient pacing, English only.
 ## Transcript:
 {frase}"""
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+API_KEY = open("key.txt").read().strip()   # tu key vive en key.txt (no se sube al repo)
+client = genai.Client(api_key=API_KEY)
 os.makedirs(OUTDIR, exist_ok=True)
 
 def parse_mime(m):
@@ -47,11 +48,9 @@ def to_wav(audio, m):
     return h+audio
 
 frases = pd.read_excel(EXCEL, header=None)[COL_EN].dropna().astype(str).tolist()
-print(f"{len(frases)} frases.")
-
-with open("index.csv","w",newline="",encoding="utf-8") as f:
-    w=csv.writer(f); w.writerow(["numero","archivo","texto"])
-    for i,fr in enumerate(frases,1): w.writerow([i, f"{i:04d}.wav", fr])
+faltan = [i for i,_ in enumerate(frases,1)
+          if not (os.path.exists(f"{OUTDIR}/{i:04d}.wav") or os.path.exists(f"{OUTDIR}/{i:04d}.mp3"))]
+print(f"{len(frases)} frases en total, faltan {len(faltan)} por generar.")
 
 cfg = types.GenerateContentConfig(temperature=TEMP, response_modalities=["audio"],
     speech_config=types.SpeechConfig(voice_config=types.VoiceConfig(
@@ -59,7 +58,8 @@ cfg = types.GenerateContentConfig(temperature=TEMP, response_modalities=["audio"
 
 for i, fr in enumerate(frases, 1):
     out = f"{OUTDIR}/{i:04d}.wav"
-    if os.path.exists(out): continue
+    if os.path.exists(out) or os.path.exists(out[:-4]+".mp3"):
+        continue
     contents=[types.Content(role="user",parts=[types.Part.from_text(text=PROMPT_TMPL.format(frase=fr))])]
     for intento in range(3):
         try:
@@ -75,5 +75,9 @@ for i, fr in enumerate(frases, 1):
             print(f"{i:04d}/{len(frases)}  {fr[:45]}")
             time.sleep(PAUSE); break
         except Exception as e:
+            msg = str(e)
+            if "RESOURCE_EXHAUSTED" in msg or "429" in msg:
+                print("\n>> Cupo diario agotado. Vuelve a correr el mismo comando manana; sigue donde quedo.")
+                sys.exit(0)
             print(f"  reintento {intento+1} ({e})"); time.sleep(5*(intento+1))
-print("Listo.")
+print("Listo: no falta ninguno.")

@@ -1,0 +1,86 @@
+@if (open()) {
+  <div class="backdrop" (click)="closed.emit()" aria-hidden="true"></div>
+  <section
+    class="sheet"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="i18n.t('settings')"
+  >
+    <header class="sheet-header">
+      <h2>{{ i18n.t('settings') }}</h2>
+      <button type="button" class="icon-btn" (click)="closed.emit()">
+        {{ i18n.t('close') }}
+      </button>
+    </header>
+
+    <div class="field">
+      <label for="rate">{{ i18n.t('speed') }}: {{ store.settings().playbackRate }}×</label>
+      <input
+        id="rate"
+        type="range"
+        [min]="rateMin"
+        [max]="rateMax"
+        step="0.05"
+        [value]="store.settings().playbackRate"
+        (input)="onRate($event)"
+      />
+    </div>
+
+    <div class="field">
+      <label for="reps">{{ i18n.t('repetitions') }}: {{ store.settings().repetitions }}</label>
+      <input
+        id="reps"
+        type="range"
+        [min]="repsMin"
+        [max]="repsMax"
+        step="1"
+        [value]="store.settings().repetitions"
+        (input)="onReps($event)"
+      />
+    </div>
+
+    <div class="field">
+      <span class="field-label">{{ i18n.t('pauseMode') }}</span>
+      <div class="segmented" role="group" [attr.aria-label]="i18n.t('pauseMode')">
+        @for (mode of pauseModes; track mode) {
+          <button
+            type="button"
+            [class.active]="store.settings().pauseMode === mode"
+            [attr.aria-pressed]="store.settings().pauseMode === mode"
+            (click)="onPause(mode)"
+          >
+            {{ pauseLabel(mode) }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="field row">
+      <label for="auto">{{ i18n.t('autoAdvance') }}</label>
+      <input
+        id="auto"
+        type="checkbox"
+        [checked]="store.settings().autoAdvance"
+        (change)="onAuto($event)"
+      />
+    </div>
+
+    <div class="field row">
+      <label for="show-tr">{{ i18n.t('showTranslation') }}</label>
+      <input
+        id="show-tr"
+        type="checkbox"
+        [checked]="store.settings().showTranslation"
+        (change)="onShowTranslation($event)"
+      />
+    </div>
+
+    <div class="field row">
+      <label for="lang">{{ i18n.t('translationLang') }}</label>
+      <select id="lang" [value]="store.settings().translationLang" (change)="onLang($event)">
+        <option value="es">Español</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </section>
+}

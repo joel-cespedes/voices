@@ -1,0 +1,92 @@
+<div class="screen" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
+  <!-- Top progress + counter -->
+  <header class="top">
+    <app-progress-bar [ratio]="store.progress()" />
+    <div class="meta">
+      <span class="counter" aria-live="polite">
+        {{ i18n.t('counter') }} {{ store.index() + 1 }} / {{ store.total() }}
+      </span>
+      <button
+        type="button"
+        class="icon-btn"
+        [attr.aria-label]="i18n.t('settings')"
+        (click)="openSettings()"
+      >
+        ⚙
+      </button>
+    </div>
+  </header>
+
+  @switch (store.loadPhase()) {
+    @case ('loading') {
+      <main class="stage center"><p class="hint">{{ i18n.t('loading') }}</p></main>
+    }
+    @case ('error') {
+      <main class="stage center">
+        <p class="hint">{{ i18n.t('errorLoad') }}</p>
+        <button type="button" class="primary" (click)="store.init()">
+          {{ i18n.t('retry') }}
+        </button>
+      </main>
+    }
+    @default {
+      @if (store.current(); as phrase) {
+        <!-- Side tap zones (stories-like) -->
+        <button
+          type="button"
+          class="tap-zone left"
+          [attr.aria-label]="i18n.t('previous')"
+          (click)="store.previous()"
+        ></button>
+        <button
+          type="button"
+          class="tap-zone right"
+          [attr.aria-label]="i18n.t('next')"
+          (click)="store.next()"
+        ></button>
+
+        <main class="stage">
+          <p
+            class="en"
+            [class.sounding]="store.isPlaying()"
+            [class.shadowing]="store.isShadowing()"
+          >
+            {{ phrase.en }}
+          </p>
+
+          @if (store.showEs()) {
+            <p class="es">{{ phrase.es }}</p>
+          }
+
+          <div class="status" aria-live="polite">
+            @if (store.isPlaying()) {
+              <span class="dot playing" aria-hidden="true"></span>
+            } @else if (store.isShadowing()) {
+              <span class="shadow-label">{{ i18n.t('shadowingNow') }}</span>
+            }
+          </div>
+        </main>
+      } @else {
+        <main class="stage center"><p class="hint">{{ i18n.t('empty') }}</p></main>
+      }
+    }
+  }
+
+  <!-- Bottom controls -->
+  <footer class="controls">
+    <button type="button" class="icon-btn" [attr.aria-label]="i18n.t('previous')" (click)="store.previous()">⏮</button>
+    <button type="button" class="icon-btn" [attr.aria-label]="i18n.t('repeat')" (click)="store.repeat()">↻</button>
+    <button
+      type="button"
+      class="icon-btn big"
+      [attr.aria-label]="store.isPlaying() ? i18n.t('pause') : i18n.t('play')"
+      (click)="store.togglePlay()"
+    >
+      {{ store.isPlaying() ? '❚❚' : '►' }}
+    </button>
+    <button type="button" class="icon-btn" [attr.aria-label]="i18n.t('showTranslation')" (click)="store.toggleTranslation()">あ</button>
+    <button type="button" class="icon-btn" [attr.aria-label]="i18n.t('next')" (click)="store.next()">⏭</button>
+  </footer>
+
+  <app-settings-sheet [open]="settingsOpen()" (closed)="closeSettings()" />
+</div>
