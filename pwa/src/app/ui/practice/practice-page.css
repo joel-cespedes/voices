@@ -49,7 +49,8 @@
   gap: 16px;
 }
 
-.en {
+/* Texto principal en pantalla: la frase en español. */
+.phrase {
   margin: 0;
   font-size: clamp(1.8rem, 7vw, 2.6rem);
   font-weight: 700;
@@ -57,19 +58,18 @@
   transition: opacity 200ms ease, transform 200ms ease;
 }
 
-.en.sounding {
+.phrase.sounding {
   opacity: 1;
 }
 
-.en.shadowing {
+.phrase.shadowing {
   opacity: 0.55;
 }
 
-.es {
-  margin: 0;
-  font-size: clamp(1rem, 4.5vw, 1.25rem);
-  font-weight: 400;
-  opacity: 0.7;
+/* La carta inglesa: misma frase, otro idioma. Un matiz de color basta para
+   saber de un vistazo en cuál de las dos estás. */
+.phrase.english {
+  color: #a5b4fc;
 }
 
 .hint {
@@ -115,7 +115,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dot.playing,
-  .en {
+  .phrase {
     animation: none;
     transition: none;
   }

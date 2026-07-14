@@ -17,8 +17,6 @@ export interface Settings {
   readonly pauseMode: ShadowingPauseMode;
   /** When true, the session advances automatically after the shadowing pause. */
   readonly autoAdvance: boolean;
-  /** When true, the Spanish translation is shown (if present). */
-  readonly showTranslation: boolean;
   /** Language code of the visible translation (e.g. 'es'). */
   readonly translationLang: string;
 }
@@ -28,6 +26,5 @@ export const DEFAULT_SETTINGS: Settings = {
   repetitions: 2,
   pauseMode: 'medium',
   autoAdvance: false,
-  showTranslation: true,
   translationLang: 'es',
 };

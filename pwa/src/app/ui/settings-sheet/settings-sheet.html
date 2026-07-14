@@ -66,16 +66,6 @@
     </div>
 
     <div class="field row">
-      <label for="show-tr">{{ i18n.t('showTranslation') }}</label>
-      <input
-        id="show-tr"
-        type="checkbox"
-        [checked]="store.settings().showTranslation"
-        (change)="onShowTranslation($event)"
-      />
-    </div>
-
-    <div class="field row">
       <label for="lang">{{ i18n.t('translationLang') }}</label>
       <select id="lang" [value]="store.settings().translationLang" (change)="onLang($event)">
         <option value="es">Español</option>

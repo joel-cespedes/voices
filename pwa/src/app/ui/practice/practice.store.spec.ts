@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_SETTINGS } from '../../domain/settings';
+import type { Phrase } from '../../domain/phrase';
 import type { CdnConfig } from '../../core/config/cdn-config';
 import {
   AUDIO_PLAYER,
@@ -40,6 +41,7 @@ function setup(opts: {
   audio?: FakeAudioPlayer;
   progress?: FakeProgressStorage;
   settings?: FakeSettingsStorage;
+  phrases?: readonly Phrase[];
 }): {
   store: PracticeStore;
   audio: FakeAudioPlayer;
@@ -48,9 +50,10 @@ function setup(opts: {
   const audio = opts.audio ?? new FakeAudioPlayer();
   const progress = opts.progress ?? new FakeProgressStorage();
   const settings = opts.settings ?? new FakeSettingsStorage();
+  const deck = opts.phrases ?? phrases;
   TestBed.configureTestingModule({
     providers: [
-      { provide: PHRASE_REPOSITORY, useValue: new FakePhraseRepository(phrases) },
+      { provide: PHRASE_REPOSITORY, useValue: new FakePhraseRepository(deck) },
       { provide: AUDIO_PLAYER, useValue: audio },
       { provide: PROGRESS_STORAGE, useValue: progress },
       { provide: SETTINGS_STORAGE, useValue: settings },
@@ -125,5 +128,64 @@ describe('PracticeStore', () => {
     store.next();
     expect(store.index()).toBe(1);
     expect(progress.saved).toEqual({ currentIndex: 1 });
+  });
+
+  it('shows the Spanish card first and the English one on the next screen', async () => {
+    const { store } = setup({
+      phrases: [
+        makePhrase({ numero: 1, en: 'Who looks after your dog?', es: '¿Quién cuida a tu perro?' }),
+        makePhrase({ numero: 2, en: 'I can handle it.', es: 'Puedo hacerlo yo.' }),
+      ],
+    });
+    await store.init();
+    await flush();
+
+    // Primera pantalla: el español.
+    expect(store.text()).toBe('¿Quién cuida a tu perro?');
+    expect(store.isEnglishCard()).toBe(false);
+
+    // La de al lado: el inglés de LA MISMA frase (no la frase siguiente).
+    store.next();
+    await flush();
+    expect(store.text()).toBe('Who looks after your dog?');
+    expect(store.isEnglishCard()).toBe(true);
+    expect(store.index()).toBe(0);
+
+    // Y la siguiente ya es el español de la frase 2.
+    store.next();
+    await flush();
+    expect(store.text()).toBe('Puedo hacerlo yo.');
+    expect(store.index()).toBe(1);
+  });
+
+  it('plays the English audio on BOTH cards of a phrase', async () => {
+    const { store, audio } = setup({
+      phrases: [makePhrase({ numero: 1, archivo: '0001.mp3', en: 'I can handle it.', es: 'Puedo hacerlo yo.' })],
+    });
+    await store.init();
+    await flush();
+
+    // En la carta española suena el inglés...
+    void store.playCurrent();
+    await flush();
+    expect(audio.loaded).toEqual(['0001.mp3']);
+
+    // ...y en la inglesa suena exactamente el mismo audio.
+    store.next();
+    await flush();
+    expect(store.isEnglishCard()).toBe(true);
+    expect(audio.loaded).toEqual(['0001.mp3', '0001.mp3']);
+  });
+
+  it('gives an untranslated phrase a single English card', async () => {
+    const { store } = setup({
+      phrases: [makePhrase({ numero: 1, en: 'No translation here.', es: null })],
+    });
+    await store.init();
+    await flush();
+
+    // Sin español no dejamos la pantalla en blanco: se muestra el inglés.
+    expect(store.text()).toBe('No translation here.');
+    expect(store.isEnglishCard()).toBe(true);
   });
 });

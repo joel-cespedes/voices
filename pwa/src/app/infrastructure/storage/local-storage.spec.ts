@@ -32,7 +32,7 @@ describe('LocalStorageSettings', () => {
   });
 
   it('fills missing keys from defaults for partial payloads', () => {
-    globalThis.localStorage.setItem('shadow.settings.v2', '{"repetitions":3}');
+    globalThis.localStorage.setItem('shadow.settings.v3', '{"repetitions":3}');
     const loaded = new LocalStorageSettings().load();
     expect(loaded?.repetitions).toBe(3);
     expect(loaded?.playbackRate).toBe(DEFAULT_SETTINGS.playbackRate);

@@ -55,12 +55,6 @@ export class SettingsSheet {
     this.store.setAutoAdvance((event.target as HTMLInputElement).checked);
   }
 
-  protected onShowTranslation(event: Event): void {
-    if ((event.target as HTMLInputElement).checked !== this.store.settings().showTranslation) {
-      this.store.toggleTranslation();
-    }
-  }
-
   protected onLang(event: Event): void {
     this.store.setTranslationLang((event.target as HTMLSelectElement).value);
   }

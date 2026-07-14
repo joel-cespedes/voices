@@ -1,10 +1,19 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
 import type { Phrase } from '../../domain/phrase';
-import { hasTranslation } from '../../domain/phrase';
+import {
+  cardText,
+  flip,
+  nextCard,
+  normalize,
+  previousCard,
+  type CardPosition,
+  type Face,
+} from '../../domain/card';
 import {
   createSession,
   currentPhrase as domainCurrent,
+  type PracticeSession,
 } from '../../domain/practice-session';
 import {
   DEFAULT_SETTINGS,
@@ -15,13 +24,8 @@ import type { PlaybackStatus } from '../../domain/playback-state';
 import { computeShadowingPauseMs, progressRatio } from '../../domain/rules';
 
 import { LoadPhrases } from '../../application/use-cases/load-phrases';
-import {
-  AdvanceSession,
-  GoToPhrase,
-  RewindSession,
-} from '../../application/use-cases/navigate-session';
+import { GoToPhrase } from '../../application/use-cases/navigate-session';
 import { RepeatCurrent } from '../../application/use-cases/repeat-current';
-import { ToggleTranslation } from '../../application/use-cases/toggle-translation';
 import { UpdateSettings } from '../../application/use-cases/update-settings';
 
 import {
@@ -51,16 +55,15 @@ export class PracticeStore {
 
   // Use cases (wired with their ports).
   private readonly loadPhrases = new LoadPhrases(this.repository);
-  private readonly advanceUC = new AdvanceSession(this.progressStore);
-  private readonly rewindUC = new RewindSession(this.progressStore);
   private readonly gotoUC = new GoToPhrase(this.progressStore);
   private readonly repeatUC = new RepeatCurrent();
-  private readonly toggleTrUC = new ToggleTranslation(this.settingsStore);
   private readonly updateUC = new UpdateSettings(this.settingsStore);
 
   // --- State ---------------------------------------------------------------
   private readonly _phrases = signal<readonly Phrase[]>([]);
   private readonly _index = signal(0);
+  /** Cara visible de la frase actual: 'es' la lees, 'en' la compruebas. */
+  private readonly _face = signal<Face>('es');
   private readonly _settings = signal<Settings>(DEFAULT_SETTINGS);
   private readonly _loadPhase = signal<LoadPhase>('loading');
   private readonly _status = signal<PlaybackStatus>('idle');
@@ -83,12 +86,14 @@ export class PracticeStore {
   readonly progress = computed(() => progressRatio(this._index(), this.total()));
   readonly isPlaying = computed(() => this._status() === 'playing');
   readonly isShadowing = computed(() => this._status() === 'shadowing');
-  readonly showEs = computed(() => {
-    const phrase = this.current();
-    return (
-      this._settings().showTranslation && phrase !== null && hasTranslation(phrase)
-    );
-  });
+  /** Cara visible ('es' o 'en'). */
+  readonly face = this._face.asReadonly();
+
+  /** El único texto en pantalla: el español, o el inglés en la carta siguiente. */
+  readonly text = computed(() => cardText(this.current(), this._face()));
+
+  /** True cuando la carta visible es la inglesa (la de comprobar). */
+  readonly isEnglishCard = computed(() => this._face() === 'en');
 
   private pauseTimer: ReturnType<typeof setTimeout> | null = null;
   private disposeEnded: (() => void) | null = null;
@@ -112,6 +117,9 @@ export class PracticeStore {
       this._phrases.set(phrases);
       const saved = this.progressStore.load();
       this.setIndex(saved?.currentIndex ?? 0);
+      // Se retoma siempre por la carta española; si la frase no tiene
+      // traducción, normalize() la coloca en la inglesa (su única carta).
+      this._face.set(normalize(this.session(), { index: this._index(), face: 'es' }).face);
       this._loadPhase.set('ready');
       // No autoplay on load: audio starts when the user navigates (swipe/tap)
       // or presses play. This also avoids the mobile autoplay block.
@@ -186,26 +194,24 @@ export class PracticeStore {
 
   // --- Navigation ----------------------------------------------------------
 
+  /** Siguiente carta: el inglés de esta frase, o el español de la siguiente. */
   next(): void {
-    const session = this.advanceUC.execute(
-      createSession(this._phrases(), this._index()),
-    );
-    this.moveTo(session.index);
+    this.moveToCard(nextCard(this.session(), this.position()));
   }
 
+  /** Carta anterior (simétrico de `next`). */
   previous(): void {
-    const session = this.rewindUC.execute(
-      createSession(this._phrases(), this._index()),
-    );
-    this.moveTo(session.index);
+    this.moveToCard(previousCard(this.session(), this.position()));
   }
 
+  /** Salta directamente a una frase, empezando por su primera carta. */
   goTo(index: number): void {
-    const session = this.gotoUC.execute(
-      createSession(this._phrases(), this._index()),
-      index,
-    );
-    this.moveTo(session.index);
+    this.moveToCard({ index, face: 'es' });
+  }
+
+  /** Salta entre el español y el inglés de la MISMA frase. */
+  flipCard(): void {
+    this.moveToCard(flip(this.session(), this.position()));
   }
 
   // --- Settings ------------------------------------------------------------
@@ -231,9 +237,6 @@ export class PracticeStore {
     this._settings.set(this.updateUC.execute(this._settings(), { translationLang }));
   }
 
-  toggleTranslation(): void {
-    this._settings.set(this.toggleTrUC.execute(this._settings()));
-  }
 
   // --- Offline prefetch ----------------------------------------------------
 
@@ -259,10 +262,29 @@ export class PracticeStore {
 
   // --- Internals -----------------------------------------------------------
 
-  private moveTo(index: number): void {
+  /** La sesión de dominio correspondiente al estado actual. */
+  private session(): PracticeSession {
+    return createSession(this._phrases(), this._index());
+  }
+
+  /** Dónde estamos: frase + cara. */
+  private position(): CardPosition {
+    return { index: this._index(), face: this._face() };
+  }
+
+  /**
+   * Mueve a una carta y reproduce su audio. El audio es el MISMO en las dos
+   * caras —siempre la grabación en inglés—, porque es la pronunciación que se
+   * practica: en la carta española la escuchas para repetirla, y en la inglesa
+   * la vuelves a oír mientras compruebas el texto.
+   */
+  private moveToCard(position: CardPosition): void {
     this.clearTimer();
     this.audio.stop();
-    this.setIndex(index);
+    // El caso de uso persiste la posición y aplica el clamp del dominio.
+    const session = this.gotoUC.execute(this.session(), position.index);
+    this.setIndex(session.index);
+    this._face.set(position.face);
     void this.playCurrent();
   }
 

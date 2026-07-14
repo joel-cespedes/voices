@@ -10,7 +10,6 @@ import {
 import { LoadPhrases } from './load-phrases';
 import { AdvanceSession, GoToPhrase, RewindSession } from './navigate-session';
 import { RepeatCurrent } from './repeat-current';
-import { ToggleTranslation } from './toggle-translation';
 import { UpdateSettings } from './update-settings';
 
 const phrases = [makePhrase({ numero: 1 }), makePhrase({ numero: 2 }), makePhrase({ numero: 3 })];
@@ -49,15 +48,6 @@ describe('RepeatCurrent', () => {
   it('returns the current phrase', () => {
     const phrase = new RepeatCurrent().execute(createSession(phrases, 1));
     expect(phrase?.numero).toBe(2);
-  });
-});
-
-describe('ToggleTranslation', () => {
-  it('flips the flag and persists', () => {
-    const settings = new FakeSettingsStorage();
-    const next = new ToggleTranslation(settings).execute(DEFAULT_SETTINGS);
-    expect(next.showTranslation).toBe(!DEFAULT_SETTINGS.showTranslation);
-    expect(settings.saved?.showTranslation).toBe(next.showTranslation);
   });
 });
 
