@@ -25,7 +25,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   playbackRate: 1,
-  repetitions: 1,
+  repetitions: 2,
   pauseMode: 'medium',
   autoAdvance: false,
   showTranslation: true,

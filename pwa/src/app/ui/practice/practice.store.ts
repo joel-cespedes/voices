@@ -113,7 +113,9 @@ export class PracticeStore {
       const saved = this.progressStore.load();
       this.setIndex(saved?.currentIndex ?? 0);
       this._loadPhase.set('ready');
-      void this.playCurrent();
+      // No autoplay on load: audio starts when the user navigates (swipe/tap)
+      // or presses play. This also avoids the mobile autoplay block.
+      this._status.set('idle');
     } catch {
       this._loadPhase.set('error');
     }

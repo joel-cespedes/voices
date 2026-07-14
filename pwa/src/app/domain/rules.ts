@@ -12,7 +12,7 @@ export const REPETITIONS_MAX = 3;
 
 /** Fixed shadowing pauses (ms) for the non-phrase-relative modes. */
 export const SHORT_PAUSE_MS = 1200;
-export const MEDIUM_PAUSE_MS = 2500;
+export const MEDIUM_PAUSE_MS = 3000;
 
 /** Fallback pause when the audio duration is unknown and mode is 'phrase'. */
 export const FALLBACK_PHRASE_PAUSE_MS = MEDIUM_PAUSE_MS;

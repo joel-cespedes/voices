@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS, type Settings } from '../../domain/settings';
 import type { SettingsPort } from '../../application/ports/settings.port';
 import { readJson, writeJson } from './safe-storage';
 
-const KEY = 'shadow.settings.v1';
+const KEY = 'shadow.settings.v2';
 
 /** Adapter: persists Settings in localStorage, merging onto defaults. */
 @Injectable()

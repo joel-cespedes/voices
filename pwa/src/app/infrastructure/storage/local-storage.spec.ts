@@ -16,7 +16,7 @@ describe('LocalStorageProgress', () => {
   });
 
   it('ignores malformed data', () => {
-    globalThis.localStorage.setItem('shadow.progress.v1', '{"currentIndex":"nope"}');
+    globalThis.localStorage.setItem('shadow.progress.v2', '{"currentIndex":"nope"}');
     expect(new LocalStorageProgress().load()).toBeNull();
   });
 });
@@ -32,7 +32,7 @@ describe('LocalStorageSettings', () => {
   });
 
   it('fills missing keys from defaults for partial payloads', () => {
-    globalThis.localStorage.setItem('shadow.settings.v1', '{"repetitions":3}');
+    globalThis.localStorage.setItem('shadow.settings.v2', '{"repetitions":3}');
     const loaded = new LocalStorageSettings().load();
     expect(loaded?.repetitions).toBe(3);
     expect(loaded?.playbackRate).toBe(DEFAULT_SETTINGS.playbackRate);

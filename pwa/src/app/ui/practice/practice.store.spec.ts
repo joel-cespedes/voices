@@ -66,13 +66,19 @@ afterEach(() => {
 });
 
 describe('PracticeStore', () => {
-  it('loads phrases and autoplays the first one', async () => {
+  it('loads phrases WITHOUT autoplaying, then plays when navigating', async () => {
     const { store, audio } = setup({});
     await store.init();
     await flush();
     expect(store.loadPhase()).toBe('ready');
     expect(store.total()).toBe(3);
-    expect(audio.loaded).toEqual(['0001.mp3']);
+    // No autoplay on load.
+    expect(audio.playCount).toBe(0);
+    expect(store.status()).toBe('idle');
+    // Navigating (swipe/tap) plays the new phrase.
+    store.next();
+    await flush();
+    expect(audio.loaded).toEqual(['0002.mp3']);
     expect(audio.playCount).toBe(1);
     expect(store.status()).toBe('playing');
   });
@@ -88,6 +94,9 @@ describe('PracticeStore', () => {
     const { store, audio, progress } = setup({ settings });
     await store.init();
     await flush();
+    // Start playback explicitly (no autoplay on load).
+    void store.playCurrent();
+    await flush();
     expect(audio.playCount).toBe(1);
 
     audio.emitEnded(); // repetition 1 -> replay (2nd play)
@@ -96,7 +105,7 @@ describe('PracticeStore', () => {
     audio.emitEnded(); // repetition 2 done -> shadowing
     expect(store.status()).toBe('shadowing');
 
-    vi.advanceTimersByTime(2500); // medium pause elapses -> auto-advance
+    vi.advanceTimersByTime(3000); // medium pause (3s) elapses -> auto-advance
     expect(store.index()).toBe(1);
     expect(progress.saved).toEqual({ currentIndex: 1 });
   });

@@ -17,7 +17,9 @@ export class JsDelivrCsvPhraseRepository implements PhraseRepositoryPort {
   private readonly cfg = inject<CdnConfig>(CDN_CONFIG);
 
   async loadAll(): Promise<readonly Phrase[]> {
-    const response = await fetch(indexUrl(this.cfg), { cache: 'force-cache' });
+    // Revalidate so translation/index updates propagate; the service worker
+    // still provides the cached index when offline.
+    const response = await fetch(indexUrl(this.cfg), { cache: 'no-cache' });
     if (!response.ok) {
       throw new Error(`Failed to load phrase index: HTTP ${response.status}`);
     }
