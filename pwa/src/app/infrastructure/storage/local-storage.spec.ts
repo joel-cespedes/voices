@@ -28,7 +28,7 @@ describe('LocalStorageSettings', () => {
     store.save({ ...DEFAULT_SETTINGS, playbackRate: 0.75 });
     const loaded = store.load();
     expect(loaded?.playbackRate).toBe(0.75);
-    expect(loaded?.pauseMode).toBe(DEFAULT_SETTINGS.pauseMode);
+    expect(loaded?.translationLang).toBe(DEFAULT_SETTINGS.translationLang);
   });
 
   it('fills missing keys from defaults for partial payloads', () => {

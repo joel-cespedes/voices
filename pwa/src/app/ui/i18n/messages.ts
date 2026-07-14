@@ -21,11 +21,6 @@ export type MessageKey =
   | 'showTranslation'
   | 'speed'
   | 'repetitions'
-  | 'pauseMode'
-  | 'pauseShort'
-  | 'pauseMedium'
-  | 'pausePhrase'
-  | 'autoAdvance'
   | 'translationLang'
   | 'counter';
 
@@ -49,11 +44,6 @@ export const MESSAGES: Record<UiLocale, Catalog> = {
     showTranslation: 'Ver la otra cara (español / inglés)',
     speed: 'Velocidad',
     repetitions: 'Repeticiones',
-    pauseMode: 'Pausa de shadowing',
-    pauseShort: 'Corta',
-    pauseMedium: 'Media',
-    pausePhrase: 'Igual a la frase',
-    autoAdvance: 'Auto-avance',
     translationLang: 'Idioma de traducción',
     counter: 'Frase',
   },
@@ -74,11 +64,6 @@ export const MESSAGES: Record<UiLocale, Catalog> = {
     showTranslation: 'Flip card (Spanish / English)',
     speed: 'Speed',
     repetitions: 'Repetitions',
-    pauseMode: 'Shadowing pause',
-    pauseShort: 'Short',
-    pauseMedium: 'Medium',
-    pausePhrase: 'Same as phrase',
-    autoAdvance: 'Auto-advance',
     translationLang: 'Translation language',
     counter: 'Phrase',
   },

@@ -93,19 +93,14 @@ describe('PracticeStore', () => {
     expect(store.status()).toBe('playing');
   });
 
-  it('replays per repetitions then enters the shadowing pause and auto-advances', async () => {
+  it('repite con 2s de silencio, y al acabar se para SIN avanzar de pantalla', async () => {
     vi.useFakeTimers();
-    const settings = new FakeSettingsStorage({
-      ...DEFAULT_SETTINGS,
-      repetitions: 2,
-      autoAdvance: true,
-      pauseMode: 'medium',
-    });
-    const { store, audio, progress } = setup({ settings });
+    const settings = new FakeSettingsStorage({ ...DEFAULT_SETTINGS, repetitions: 2 });
+    const { store, audio } = setup({ settings });
     await store.init();
     await flush();
-    // Start playback explicitly (no autoplay on load).
-    void store.playCurrent();
+
+    store.togglePlay();
     await flush();
     expect(audio.playCount).toBe(1);
 
@@ -121,12 +116,19 @@ describe('PracticeStore', () => {
     expect(audio.playCount).toBe(2);
     expect(store.status()).toBe('playing');
 
-    audio.emitEnded(); // repetition 2 done -> shadowing
-    expect(store.status()).toBe('shadowing');
+    // Fin de la ULTIMA repeticion: se para y ahi se queda.
+    audio.emitEnded();
+    expect(store.status()).toBe('idle');
 
-    vi.advanceTimersByTime(3000); // medium pause (3s) elapses -> auto-advance
-    expect(store.index()).toBe(1);
-    expect(progress.saved).toEqual({ currentIndex: 1 });
+    // Por mucho que pase el tiempo: ni suena mas, ni avanza de pantalla.
+    vi.advanceTimersByTime(60_000);
+    expect(audio.playCount).toBe(2);
+    expect(store.index()).toBe(0);
+
+    // Solo vuelve a sonar si el usuario pulsa play.
+    store.togglePlay();
+    await flush();
+    expect(audio.playCount).toBe(3);
   });
 
   it('resumes from the persisted position', async () => {

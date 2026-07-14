@@ -15,13 +15,9 @@ import {
   currentPhrase as domainCurrent,
   type PracticeSession,
 } from '../../domain/practice-session';
-import {
-  DEFAULT_SETTINGS,
-  type Settings,
-  type ShadowingPauseMode,
-} from '../../domain/settings';
+import { DEFAULT_SETTINGS, type Settings } from '../../domain/settings';
 import type { PlaybackStatus } from '../../domain/playback-state';
-import { computeShadowingPauseMs, progressRatio, REPEAT_GAP_MS } from '../../domain/rules';
+import { progressRatio, REPEAT_GAP_MS } from '../../domain/rules';
 
 import { LoadPhrases } from '../../application/use-cases/load-phrases';
 import { GoToPhrase } from '../../application/use-cases/navigate-session';
@@ -157,9 +153,10 @@ export class PracticeStore {
         this._status.set('paused');
         return;
       }
-      // Missing/broken audio: surface the error but keep auto mode flowing.
+      // Audio que falta o no carga: se marca el error y se queda parado.
+      this.clearTimer();
+      this._repetition.set(0);
       this._status.set('error');
-      this.scheduleShadowing();
     }
   }
 
@@ -223,14 +220,6 @@ export class PracticeStore {
 
   setRepetitions(repetitions: number): void {
     this._settings.set(this.updateUC.execute(this._settings(), { repetitions }));
-  }
-
-  setPauseMode(pauseMode: ShadowingPauseMode): void {
-    this._settings.set(this.updateUC.execute(this._settings(), { pauseMode }));
-  }
-
-  setAutoAdvance(autoAdvance: boolean): void {
-    this._settings.set(this.updateUC.execute(this._settings(), { autoAdvance }));
   }
 
   setTranslationLang(translationLang: string): void {
@@ -301,7 +290,7 @@ export class PracticeStore {
       this.scheduleRepeat();
       return;
     }
-    this.scheduleShadowing();
+    this.finish();
   }
 
   /**
@@ -315,31 +304,23 @@ export class PracticeStore {
       this.pauseTimer = null;
       this._repetition.update((r) => r + 1);
       this._status.set('playing');
-      void this.audio.play().catch(() => this.scheduleShadowing());
+      void this.audio.play().catch(() => this.finish());
     }, REPEAT_GAP_MS);
+  }
+
+  /**
+   * Fin de las repeticiones: se para y ahí se queda. NO avanza de pantalla —
+   * eso lo decides tú— ni vuelve a sonar hasta que pulses play otra vez.
+   */
+  private finish(): void {
+    this.clearTimer();
+    this._repetition.set(0);
+    this._status.set('idle');
   }
 
   private handleError(): void {
     if (this._status() === 'loading') return; // load() handles its own rejection
     this._status.set('error');
-  }
-
-  /** Enter the silent shadowing pause, then auto-advance if enabled. */
-  private scheduleShadowing(): void {
-    this.clearTimer();
-    this._status.set('shadowing');
-    const ms = computeShadowingPauseMs(
-      this._settings().pauseMode,
-      this.audio.durationMs(),
-    );
-    this.pauseTimer = setTimeout(() => {
-      this.pauseTimer = null;
-      if (this._settings().autoAdvance) {
-        this.next();
-      } else {
-        this._status.set('idle');
-      }
-    }, ms);
   }
 
   private clearTimer(): void {

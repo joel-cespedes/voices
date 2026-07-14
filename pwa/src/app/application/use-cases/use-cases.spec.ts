@@ -57,11 +57,11 @@ describe('UpdateSettings', () => {
     const next = new UpdateSettings(settings).execute(DEFAULT_SETTINGS, {
       playbackRate: 5,
       repetitions: 9,
-      pauseMode: 'phrase',
+      translationLang: 'en',
     });
     expect(next.playbackRate).toBe(1.25);
     expect(next.repetitions).toBe(3);
-    expect(next.pauseMode).toBe('phrase');
+    expect(next.translationLang).toBe('en');
     expect(settings.saved).toEqual(next);
   });
 });

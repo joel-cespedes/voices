@@ -39,32 +39,6 @@
       />
     </div>
 
-    <div class="field">
-      <span class="field-label">{{ i18n.t('pauseMode') }}</span>
-      <div class="segmented" role="group" [attr.aria-label]="i18n.t('pauseMode')">
-        @for (mode of pauseModes; track mode) {
-          <button
-            type="button"
-            [class.active]="store.settings().pauseMode === mode"
-            [attr.aria-pressed]="store.settings().pauseMode === mode"
-            (click)="onPause(mode)"
-          >
-            {{ pauseLabel(mode) }}
-          </button>
-        }
-      </div>
-    </div>
-
-    <div class="field row">
-      <label for="auto">{{ i18n.t('autoAdvance') }}</label>
-      <input
-        id="auto"
-        type="checkbox"
-        [checked]="store.settings().autoAdvance"
-        (change)="onAuto($event)"
-      />
-    </div>
-
     <div class="field row">
       <label for="lang">{{ i18n.t('translationLang') }}</label>
       <select id="lang" [value]="store.settings().translationLang" (change)="onLang($event)">

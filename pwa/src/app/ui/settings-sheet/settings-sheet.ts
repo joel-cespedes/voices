@@ -11,7 +11,6 @@ import {
   REPETITIONS_MAX,
   REPETITIONS_MIN,
 } from '../../domain/rules';
-import type { ShadowingPauseMode } from '../../domain/settings';
 import { I18nService } from '../i18n/i18n.service';
 import { PracticeStore } from '../practice/practice.store';
 
@@ -33,11 +32,6 @@ export class SettingsSheet {
   protected readonly rateMax = PLAYBACK_RATE_MAX;
   protected readonly repsMin = REPETITIONS_MIN;
   protected readonly repsMax = REPETITIONS_MAX;
-  protected readonly pauseModes: readonly ShadowingPauseMode[] = [
-    'short',
-    'medium',
-    'phrase',
-  ];
 
   protected onRate(event: Event): void {
     this.store.setPlaybackRate(Number((event.target as HTMLInputElement).value));
@@ -47,26 +41,7 @@ export class SettingsSheet {
     this.store.setRepetitions(Number((event.target as HTMLInputElement).value));
   }
 
-  protected onPause(mode: ShadowingPauseMode): void {
-    this.store.setPauseMode(mode);
-  }
-
-  protected onAuto(event: Event): void {
-    this.store.setAutoAdvance((event.target as HTMLInputElement).checked);
-  }
-
   protected onLang(event: Event): void {
     this.store.setTranslationLang((event.target as HTMLSelectElement).value);
-  }
-
-  protected pauseLabel(mode: ShadowingPauseMode): string {
-    switch (mode) {
-      case 'short':
-        return this.i18n.t('pauseShort');
-      case 'medium':
-        return this.i18n.t('pauseMedium');
-      case 'phrase':
-        return this.i18n.t('pausePhrase');
-    }
   }
 }
