@@ -21,7 +21,7 @@ import {
   type ShadowingPauseMode,
 } from '../../domain/settings';
 import type { PlaybackStatus } from '../../domain/playback-state';
-import { computeShadowingPauseMs, progressRatio } from '../../domain/rules';
+import { computeShadowingPauseMs, progressRatio, REPEAT_GAP_MS } from '../../domain/rules';
 
 import { LoadPhrases } from '../../application/use-cases/load-phrases';
 import { GoToPhrase } from '../../application/use-cases/navigate-session';
@@ -298,11 +298,25 @@ export class PracticeStore {
 
   private handleEnded(): void {
     if (this._repetition() < this._settings().repetitions) {
-      this._repetition.update((r) => r + 1);
-      void this.audio.play().catch(() => this.scheduleShadowing());
+      this.scheduleRepeat();
       return;
     }
     this.scheduleShadowing();
+  }
+
+  /**
+   * Espera en silencio antes de encadenar la siguiente repetición. Ese hueco es
+   * el que usas para repetir en voz alta; sin él, el audio sonaría de corrido.
+   */
+  private scheduleRepeat(): void {
+    this.clearTimer();
+    this._status.set('shadowing');
+    this.pauseTimer = setTimeout(() => {
+      this.pauseTimer = null;
+      this._repetition.update((r) => r + 1);
+      this._status.set('playing');
+      void this.audio.play().catch(() => this.scheduleShadowing());
+    }, REPEAT_GAP_MS);
   }
 
   private handleError(): void {

@@ -14,6 +14,12 @@ export const REPETITIONS_MAX = 3;
 export const SHORT_PAUSE_MS = 1200;
 export const MEDIUM_PAUSE_MS = 3000;
 
+/**
+ * Silencio entre una repetición y la siguiente. Sin él, el audio se encadena de
+ * corrido y no deja hueco para repetir en voz alta, que es el ejercicio.
+ */
+export const REPEAT_GAP_MS = 2000;
+
 /** Fallback pause when the audio duration is unknown and mode is 'phrase'. */
 export const FALLBACK_PHRASE_PAUSE_MS = MEDIUM_PAUSE_MS;
 

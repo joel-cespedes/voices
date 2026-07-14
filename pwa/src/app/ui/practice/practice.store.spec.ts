@@ -109,8 +109,17 @@ describe('PracticeStore', () => {
     await flush();
     expect(audio.playCount).toBe(1);
 
-    audio.emitEnded(); // repetition 1 -> replay (2nd play)
+    // Fin de la 1a repeticion: NO encadena de corrido, espera 2s en silencio.
+    audio.emitEnded();
+    expect(audio.playCount).toBe(1);
+    expect(store.status()).toBe('shadowing');
+
+    vi.advanceTimersByTime(1999); // un pelo antes: sigue callado
+    expect(audio.playCount).toBe(1);
+
+    vi.advanceTimersByTime(1); // a los 2s exactos suena la 2a repeticion
     expect(audio.playCount).toBe(2);
+    expect(store.status()).toBe('playing');
 
     audio.emitEnded(); // repetition 2 done -> shadowing
     expect(store.status()).toBe('shadowing');
