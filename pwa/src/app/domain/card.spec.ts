@@ -55,8 +55,8 @@ describe('nextCard', () => {
     expect(nextCard(session, at(1, 'en'))).toEqual(at(2, 'es'));
   });
 
-  it('stops at the last card of the deck', () => {
-    expect(nextCard(session, at(2, 'en'))).toEqual(at(2, 'en'));
+  it('da la vuelta: de la ULTIMA carta se pasa a la primera', () => {
+    expect(nextCard(session, at(2, 'en'))).toEqual(at(0, 'es'));
   });
 });
 
@@ -69,8 +69,22 @@ describe('previousCard', () => {
     expect(previousCard(session, at(2, 'es'))).toEqual(at(1, 'en'));
   });
 
-  it('stops at the first card of the deck', () => {
-    expect(previousCard(session, at(0, 'es'))).toEqual(at(0, 'es'));
+  it('da la vuelta: de la PRIMERA carta se salta a la ultima del mazo', () => {
+    expect(previousCard(session, at(0, 'es'))).toEqual(at(2, 'en'));
+  });
+});
+
+describe('mazo circular', () => {
+  it('recorrer el mazo entero deja el ciclo cerrado en la carta inicial', () => {
+    // 3 frases: la 1a y la 3a tienen 2 cartas, la 2a solo 1 -> 5 cartas.
+    let pos = at(0, 'es');
+    for (let i = 0; i < 5; i++) pos = nextCard(session, pos);
+    expect(pos).toEqual(at(0, 'es'));
+  });
+
+  it('vuelve al mismo sitio si avanzas y retrocedes desde el borde', () => {
+    const ultima = at(2, 'en');
+    expect(previousCard(session, nextCard(session, ultima))).toEqual(ultima);
   });
 });
 

@@ -53,7 +53,12 @@ export function normalize(
     : { index: position.index, face: available[0] };
 }
 
-/** Next card: the other face of this phrase, or the first face of the next one. */
+/**
+ * Next card: the other face of this phrase, or the first face of the next one.
+ *
+ * El mazo es CIRCULAR: al pasar de la última carta se vuelve a la primera, para
+ * poder repasar sin tener que retroceder 144 pantallas.
+ */
 export function nextCard(
   session: PracticeSession,
   position: CardPosition,
@@ -65,14 +70,17 @@ export function nextCard(
   if (at < available.length - 1) {
     return { index: here.index, face: available[at + 1] };
   }
-  if (here.index >= session.phrases.length - 1) {
-    return here; // end of the deck
-  }
-  const next = here.index + 1;
+  if (session.phrases.length === 0) return here;
+
+  // Última carta -> vuelta al principio.
+  const next = here.index >= session.phrases.length - 1 ? 0 : here.index + 1;
   return { index: next, face: faces(phraseAt(session, next))[0] };
 }
 
-/** Previous card: the face before this one, or the LAST face of the previous phrase. */
+/**
+ * Previous card: the face before this one, or the LAST face of the previous
+ * phrase. También circular: desde la primera carta se salta al final del mazo.
+ */
 export function previousCard(
   session: PracticeSession,
   position: CardPosition,
@@ -84,10 +92,10 @@ export function previousCard(
   if (at > 0) {
     return { index: here.index, face: available[at - 1] };
   }
-  if (here.index <= 0) {
-    return here; // start of the deck
-  }
-  const prev = here.index - 1;
+  if (session.phrases.length === 0) return here;
+
+  // Primera carta -> salto a la última del mazo.
+  const prev = here.index <= 0 ? session.phrases.length - 1 : here.index - 1;
   const prevFaces = faces(phraseAt(session, prev));
   return { index: prev, face: prevFaces[prevFaces.length - 1] };
 }
