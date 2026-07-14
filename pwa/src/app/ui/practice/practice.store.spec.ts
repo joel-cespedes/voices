@@ -69,19 +69,26 @@ afterEach(() => {
 });
 
 describe('PracticeStore', () => {
-  it('loads phrases WITHOUT autoplaying, then plays when navigating', async () => {
+  it('never plays on its own: not on load, not when navigating — only on play', async () => {
     const { store, audio } = setup({});
     await store.init();
     await flush();
     expect(store.loadPhase()).toBe('ready');
     expect(store.total()).toBe(3);
-    // No autoplay on load.
+
+    // Al cargar, silencio.
     expect(audio.playCount).toBe(0);
     expect(store.status()).toBe('idle');
-    // Navigating (swipe/tap) plays the new phrase.
+
+    // Al navegar (swipe/tap), tambien silencio: el audio NO se dispara solo.
     store.next();
     await flush();
-    expect(audio.loaded).toEqual(['0002.mp3']);
+    expect(audio.playCount).toBe(0);
+    expect(store.status()).toBe('idle');
+
+    // Solo suena cuando el usuario pulsa play.
+    store.togglePlay();
+    await flush();
     expect(audio.playCount).toBe(1);
     expect(store.status()).toBe('playing');
   });
@@ -165,15 +172,17 @@ describe('PracticeStore', () => {
     await store.init();
     await flush();
 
-    // En la carta española suena el inglés...
-    void store.playCurrent();
+    // En la carta española, al pulsar play suena el inglés...
+    store.togglePlay();
     await flush();
     expect(audio.loaded).toEqual(['0001.mp3']);
 
-    // ...y en la inglesa suena exactamente el mismo audio.
+    // ...y en la inglesa, al pulsar play, suena exactamente el mismo audio.
     store.next();
     await flush();
     expect(store.isEnglishCard()).toBe(true);
+    store.togglePlay();
+    await flush();
     expect(audio.loaded).toEqual(['0001.mp3', '0001.mp3']);
   });
 

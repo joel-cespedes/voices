@@ -273,10 +273,12 @@ export class PracticeStore {
   }
 
   /**
-   * Mueve a una carta y reproduce su audio. El audio es el MISMO en las dos
-   * caras —siempre la grabación en inglés—, porque es la pronunciación que se
-   * practica: en la carta española la escuchas para repetirla, y en la inglesa
-   * la vuelves a oír mientras compruebas el texto.
+   * Mueve a una carta. NO reproduce nada: el audio suena solo cuando el usuario
+   * pulsa play (o repetir). Al llegar a la carta se corta lo que estuviera
+   * sonando y se queda en silencio, esperando.
+   *
+   * Cuando suene, será el MISMO audio en las dos caras —siempre la grabación en
+   * inglés—, porque es la pronunciación que se practica.
    */
   private moveToCard(position: CardPosition): void {
     this.clearTimer();
@@ -285,7 +287,8 @@ export class PracticeStore {
     const session = this.gotoUC.execute(this.session(), position.index);
     this.setIndex(session.index);
     this._face.set(position.face);
-    void this.playCurrent();
+    this._repetition.set(0);
+    this._status.set('idle');
   }
 
   private setIndex(index: number): void {
