@@ -16,7 +16,11 @@ TEMP   = 0.6
 # reflejarla en pwa/src/environments/*.ts (audioPath). Asi las URLs son nuevas y
 # ni el CDN ni el service worker sirven el audio del mazo anterior.
 OUTDIR = ROOT / "audios" / "v2"
-PAUSE  = 7
+PAUSE      = 7      # segundos entre frases (para no chocar con el limite por minuto)
+REINTENTOS = 6      # intentos por frase antes de dejarla pendiente
+ESPERA_429 = 30     # espera base tras un 429; sube en cada intento (30s, 60s, 90s...)
+TIMEOUT_MS = 90_000 # corta la peticion si Google no responde. Sin esto, una
+                    # conexion colgada bloquea el script para siempre.
 PROMPT_TMPL = """Read the following transcript based on the audio profile and director's note.
 
 # Audio Profile
@@ -37,7 +41,8 @@ Clear pronunciation, encouraging tone, patient pacing, English only.
 if not KEYFILE.exists():
     sys.exit(f"Falta {KEYFILE}: pega ahi tu API key de Google AI Studio (no se sube al repo).")
 API_KEY = KEYFILE.read_text().strip()
-client = genai.Client(api_key=API_KEY)
+client = genai.Client(api_key=API_KEY,
+                      http_options=types.HttpOptions(timeout=TIMEOUT_MS))
 os.makedirs(OUTDIR, exist_ok=True)
 
 def parse_mime(m):
@@ -72,7 +77,7 @@ for i, fr in enumerate(frases, 1):
     if os.path.exists(out) or os.path.exists(out[:-4]+".mp3"):
         continue
     contents=[types.Content(role="user",parts=[types.Part.from_text(text=PROMPT_TMPL.format(frase=fr))])]
-    for intento in range(3):
+    for intento in range(REINTENTOS):
         try:
             audio, mime = b"", "audio/L16;rate=24000"
             for chunk in client.models.generate_content_stream(model=MODEL, contents=contents, config=cfg):
@@ -87,8 +92,31 @@ for i, fr in enumerate(frases, 1):
             time.sleep(PAUSE); break
         except Exception as e:
             msg = str(e)
-            if "RESOURCE_EXHAUSTED" in msg or "429" in msg:
-                print("\n>> Cupo diario agotado. Vuelve a correr el mismo comando manana; sigue donde quedo.")
+            es_429 = "RESOURCE_EXHAUSTED" in msg or "429" in msg
+
+            # Un 429 casi siempre es el limite POR MINUTO, no el tope diario: hay
+            # que esperar y reintentar, no rendirse. Solo abortamos si el error
+            # dice explicitamente que el limite es por dia.
+            if es_429 and any(p in msg for p in ("PerDay", "per day", "perDay", "daily limit")):
+                print(f"\n>> Tope DIARIO agotado de verdad. Vuelve manana; sigue donde quedo.\n   {msg[:300]}")
                 sys.exit(0)
-            print(f"  reintento {intento+1} ({e})"); time.sleep(5*(intento+1))
-print("Listo: no falta ninguno.")
+
+            if es_429:
+                espera = ESPERA_429 * (intento + 1)   # 30s, 60s, 90s...
+                print(f"  429 (limite por minuto): espero {espera}s y reintento [{intento+1}/{REINTENTOS}]")
+                time.sleep(espera)
+                continue
+
+            print(f"  reintento {intento+1}/{REINTENTOS}: {msg[:200]}")
+            time.sleep(5 * (intento + 1))
+    else:
+        # Agotados los reintentos de ESTA frase: no matamos el proceso, seguimos
+        # con la siguiente y la dejamos pendiente para la proxima pasada.
+        print(f"  !! {i:04d} sin generar tras {REINTENTOS} intentos; sigo con la siguiente.")
+
+pendientes = [i for i,_ in enumerate(frases,1)
+              if not (os.path.exists(f"{OUTDIR}/{i:04d}.wav") or os.path.exists(f"{OUTDIR}/{i:04d}.mp3"))]
+if pendientes:
+    print(f"Quedan {len(pendientes)} sin generar. Vuelve a lanzarlo: sigue donde quedo.")
+else:
+    print("Listo: no falta ninguno.")
