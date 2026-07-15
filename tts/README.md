@@ -9,9 +9,12 @@ esta carpeta solo **produce** los ficheros que la app consume desde el CDN.
 
 | Columna | Contenido | Regla |
 | ------- | --------- | ----- |
-| **A** | número | Se ignora, se recalcula solo. Puedes dejarla vacía. |
-| **B** | frase en inglés | **Obligatoria.** Es lo que se sintetiza. Fila sin B = fila descartada. |
-| **C** | traducción al español | Opcional. Si está vacía, la app no muestra traducción en esa frase. |
+| **A** | frase en inglés | **Obligatoria.** Es lo que se sintetiza. Fila sin A = fila descartada. |
+| **B** | traducción al español | Opcional. Si está vacía, la app no muestra traducción en esa frase. |
+
+> El número del audio (`0001.mp3`) sale de la **posición** de la fila, no de
+> ninguna columna. Añade frases nuevas **al final**: si las insertas en medio,
+> las de abajo se corren un número y el audio deja de coincidir con el texto.
 
 > No partas el inglés y el español en dos ficheros distintos. El nombre del audio
 > (`0001.mp3`) sale de la **posición** de la fila, igual que el `index.csv` que lee
