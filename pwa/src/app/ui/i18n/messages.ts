@@ -18,7 +18,6 @@ export type MessageKey =
   | 'settings'
   | 'close'
   | 'shadowingNow'
-  | 'showTranslation'
   | 'speed'
   | 'repetitions'
   | 'translationLang'
@@ -41,7 +40,6 @@ export const MESSAGES: Record<UiLocale, Catalog> = {
     settings: 'Ajustes',
     close: 'Cerrar',
     shadowingNow: 'Repite en voz alta',
-    showTranslation: 'Ver la otra cara (español / inglés)',
     speed: 'Velocidad',
     repetitions: 'Repeticiones',
     translationLang: 'Idioma de traducción',
@@ -61,7 +59,6 @@ export const MESSAGES: Record<UiLocale, Catalog> = {
     settings: 'Settings',
     close: 'Close',
     shadowingNow: 'Repeat out loud',
-    showTranslation: 'Flip card (Spanish / English)',
     speed: 'Speed',
     repetitions: 'Repetitions',
     translationLang: 'Translation language',

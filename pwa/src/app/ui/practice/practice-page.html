@@ -48,12 +48,15 @@
         <main class="stage">
           <p
             class="phrase"
-            [class.english]="store.isEnglishCard()"
             [class.sounding]="store.isPlaying()"
             [class.shadowing]="store.isShadowing()"
           >
             {{ store.text() }}
           </p>
+
+          @if (store.translation()) {
+            <p class="translation">{{ store.translation() }}</p>
+          }
 
           <div class="status" aria-live="polite">
             @if (store.isPlaying()) {
@@ -81,7 +84,6 @@
     >
       {{ store.isPlaying() ? '❚❚' : '►' }}
     </button>
-    <button type="button" class="icon-btn" [attr.aria-label]="i18n.t('showTranslation')" (click)="store.flipCard()">あ</button>
     <button type="button" class="icon-btn" [attr.aria-label]="i18n.t('next')" (click)="store.next()">⏭</button>
   </footer>
 

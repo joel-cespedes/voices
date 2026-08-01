@@ -69,26 +69,21 @@ afterEach(() => {
 });
 
 describe('PracticeStore', () => {
-  it('never plays on its own: not on load, not when navigating — only on play', async () => {
+  it('no suena al cargar, pero sí al cambiar de frase', async () => {
     const { store, audio } = setup({});
     await store.init();
     await flush();
     expect(store.loadPhase()).toBe('ready');
     expect(store.total()).toBe(3);
 
-    // Al cargar, silencio.
+    // Al abrir, silencio (el navegador bloquearía el autoplay sin gesto).
     expect(audio.playCount).toBe(0);
     expect(store.status()).toBe('idle');
 
-    // Al navegar (swipe/tap), tambien silencio: el audio NO se dispara solo.
+    // Apenas se cambia de frase, suena el audio solo.
     store.next();
     await flush();
-    expect(audio.playCount).toBe(0);
-    expect(store.status()).toBe('idle');
-
-    // Solo suena cuando el usuario pulsa play.
-    store.togglePlay();
-    await flush();
+    expect(store.index()).toBe(1);
     expect(audio.playCount).toBe(1);
     expect(store.status()).toBe('playing');
   });
@@ -148,64 +143,40 @@ describe('PracticeStore', () => {
     expect(progress.saved).toEqual({ currentIndex: 1 });
   });
 
-  it('shows the Spanish card first and the English one on the next screen', async () => {
+  it('muestra el inglés en grande y el español como traducción', async () => {
     const { store } = setup({
       phrases: [
         makePhrase({ numero: 1, en: 'Who looks after your dog?', es: '¿Quién cuida a tu perro?' }),
-        makePhrase({ numero: 2, en: 'I can handle it.', es: 'Puedo hacerlo yo.' }),
       ],
     });
     await store.init();
     await flush();
 
-    // Primera pantalla: el español.
-    expect(store.text()).toBe('¿Quién cuida a tu perro?');
-    expect(store.isEnglishCard()).toBe(false);
-
-    // La de al lado: el inglés de LA MISMA frase (no la frase siguiente).
-    store.next();
-    await flush();
+    // Una sola pantalla: inglés arriba, español debajo.
     expect(store.text()).toBe('Who looks after your dog?');
-    expect(store.isEnglishCard()).toBe(true);
-    expect(store.index()).toBe(0);
-
-    // Y la siguiente ya es el español de la frase 2.
-    store.next();
-    await flush();
-    expect(store.text()).toBe('Puedo hacerlo yo.');
-    expect(store.index()).toBe(1);
+    expect(store.translation()).toBe('¿Quién cuida a tu perro?');
   });
 
-  it('plays the English audio on BOTH cards of a phrase', async () => {
+  it('reproduce el audio en inglés de la frase', async () => {
     const { store, audio } = setup({
       phrases: [makePhrase({ numero: 1, archivo: '0001.mp3', en: 'I can handle it.', es: 'Puedo hacerlo yo.' })],
     });
     await store.init();
     await flush();
 
-    // En la carta española, al pulsar play suena el inglés...
     store.togglePlay();
     await flush();
     expect(audio.loaded).toEqual(['0001.mp3']);
-
-    // ...y en la inglesa, al pulsar play, suena exactamente el mismo audio.
-    store.next();
-    await flush();
-    expect(store.isEnglishCard()).toBe(true);
-    store.togglePlay();
-    await flush();
-    expect(audio.loaded).toEqual(['0001.mp3', '0001.mp3']);
   });
 
-  it('gives an untranslated phrase a single English card', async () => {
+  it('frase sin traducción: se muestra el inglés y la traducción queda vacía', async () => {
     const { store } = setup({
       phrases: [makePhrase({ numero: 1, en: 'No translation here.', es: null })],
     });
     await store.init();
     await flush();
 
-    // Sin español no dejamos la pantalla en blanco: se muestra el inglés.
     expect(store.text()).toBe('No translation here.');
-    expect(store.isEnglishCard()).toBe(true);
+    expect(store.translation()).toBe('');
   });
 });

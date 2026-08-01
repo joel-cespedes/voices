@@ -1,15 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
 import type { Phrase } from '../../domain/phrase';
-import {
-  cardText,
-  flip,
-  nextCard,
-  normalize,
-  previousCard,
-  type CardPosition,
-  type Face,
-} from '../../domain/card';
+import { nextIndex, previousIndex } from '../../domain/card';
 import {
   createSession,
   currentPhrase as domainCurrent,
@@ -58,8 +50,6 @@ export class PracticeStore {
   // --- State ---------------------------------------------------------------
   private readonly _phrases = signal<readonly Phrase[]>([]);
   private readonly _index = signal(0);
-  /** Cara visible de la frase actual: 'es' la lees, 'en' la compruebas. */
-  private readonly _face = signal<Face>('es');
   private readonly _settings = signal<Settings>(DEFAULT_SETTINGS);
   private readonly _loadPhase = signal<LoadPhase>('loading');
   private readonly _status = signal<PlaybackStatus>('idle');
@@ -82,14 +72,12 @@ export class PracticeStore {
   readonly progress = computed(() => progressRatio(this._index(), this.total()));
   readonly isPlaying = computed(() => this._status() === 'playing');
   readonly isShadowing = computed(() => this._status() === 'shadowing');
-  /** Cara visible ('es' o 'en'). */
-  readonly face = this._face.asReadonly();
 
-  /** El único texto en pantalla: el español, o el inglés en la carta siguiente. */
-  readonly text = computed(() => cardText(this.current(), this._face()));
+  /** Texto principal: la frase en inglés (grande). */
+  readonly text = computed(() => this.current()?.en ?? '');
 
-  /** True cuando la carta visible es la inglesa (la de comprobar). */
-  readonly isEnglishCard = computed(() => this._face() === 'en');
+  /** Traducción al español (pequeña, debajo). Vacía si la frase no la trae. */
+  readonly translation = computed(() => this.current()?.es ?? '');
 
   private pauseTimer: ReturnType<typeof setTimeout> | null = null;
   private disposeEnded: (() => void) | null = null;
@@ -113,12 +101,9 @@ export class PracticeStore {
       this._phrases.set(phrases);
       const saved = this.progressStore.load();
       this.setIndex(saved?.currentIndex ?? 0);
-      // Se retoma siempre por la carta española; si la frase no tiene
-      // traducción, normalize() la coloca en la inglesa (su única carta).
-      this._face.set(normalize(this.session(), { index: this._index(), face: 'es' }).face);
       this._loadPhase.set('ready');
-      // No autoplay on load: audio starts when the user navigates (swipe/tap)
-      // or presses play. This also avoids the mobile autoplay block.
+      // Al abrir no suena solo: el navegador bloquea el autoplay sin un gesto.
+      // El audio arranca cuando el usuario cambia de frase o pulsa play.
       this._status.set('idle');
     } catch {
       this._loadPhase.set('error');
@@ -191,24 +176,19 @@ export class PracticeStore {
 
   // --- Navigation ----------------------------------------------------------
 
-  /** Siguiente carta: el inglés de esta frase, o el español de la siguiente. */
+  /** Frase siguiente (circular). Al llegar suena el audio solo. */
   next(): void {
-    this.moveToCard(nextCard(this.session(), this.position()));
+    this.moveTo(nextIndex(this.session()));
   }
 
-  /** Carta anterior (simétrico de `next`). */
+  /** Frase anterior (circular). */
   previous(): void {
-    this.moveToCard(previousCard(this.session(), this.position()));
+    this.moveTo(previousIndex(this.session()));
   }
 
-  /** Salta directamente a una frase, empezando por su primera carta. */
+  /** Salta directamente a una frase. */
   goTo(index: number): void {
-    this.moveToCard({ index, face: 'es' });
-  }
-
-  /** Salta entre el español y el inglés de la MISMA frase. */
-  flipCard(): void {
-    this.moveToCard(flip(this.session(), this.position()));
+    this.moveTo(index);
   }
 
   // --- Settings ------------------------------------------------------------
@@ -256,28 +236,18 @@ export class PracticeStore {
     return createSession(this._phrases(), this._index());
   }
 
-  /** Dónde estamos: frase + cara. */
-  private position(): CardPosition {
-    return { index: this._index(), face: this._face() };
-  }
-
   /**
-   * Mueve a una carta. NO reproduce nada: el audio suena solo cuando el usuario
-   * pulsa play (o repetir). Al llegar a la carta se corta lo que estuviera
-   * sonando y se queda en silencio, esperando.
-   *
-   * Cuando suene, será el MISMO audio en las dos caras —siempre la grabación en
-   * inglés—, porque es la pronunciación que se practica.
+   * Mueve a una frase y reproduce su audio de inmediato. Se llama desde gestos
+   * del usuario (tap, swipe, teclado, botones), así que el navegador permite el
+   * autoplay. Antes de sonar se corta lo que hubiera y se reinician repeticiones.
    */
-  private moveToCard(position: CardPosition): void {
+  private moveTo(index: number): void {
     this.clearTimer();
     this.audio.stop();
     // El caso de uso persiste la posición y aplica el clamp del dominio.
-    const session = this.gotoUC.execute(this.session(), position.index);
+    const session = this.gotoUC.execute(this.session(), index);
     this.setIndex(session.index);
-    this._face.set(position.face);
-    this._repetition.set(0);
-    this._status.set('idle');
+    void this.playCurrent();
   }
 
   private setIndex(index: number): void {
