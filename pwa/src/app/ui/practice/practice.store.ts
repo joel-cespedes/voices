@@ -83,11 +83,20 @@ export class PracticeStore {
   readonly isPlaying = computed(() => this._status() === 'playing');
   readonly isShadowing = computed(() => this._status() === 'shadowing');
 
-  /** Texto principal: la frase en inglés (grande). */
-  readonly text = computed(() => this.current()?.en ?? '');
+  /**
+   * Texto principal (grande): la frase en ESPAÑOL. Si la frase no trae
+   * traducción, se muestra el inglés en grande para no dejar la pantalla vacía.
+   */
+  readonly text = computed(() => {
+    const phrase = this.current();
+    return phrase?.es ?? phrase?.en ?? '';
+  });
 
-  /** Traducción al español (pequeña, debajo). Vacía si la frase no la trae. */
-  readonly translation = computed(() => this.current()?.es ?? '');
+  /** Texto secundario (pequeño, debajo): el INGLÉS, que es lo que suena. Vacío si arriba ya está el inglés. */
+  readonly translation = computed(() => {
+    const phrase = this.current();
+    return phrase?.es ? phrase.en : '';
+  });
 
   private pauseTimer: ReturnType<typeof setTimeout> | null = null;
   private disposeEnded: (() => void) | null = null;

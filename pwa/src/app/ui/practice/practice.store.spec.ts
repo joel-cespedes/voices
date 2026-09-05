@@ -150,7 +150,7 @@ describe('PracticeStore', () => {
     expect(progress.load('home')).toEqual({ currentIndex: 1 });
   });
 
-  it('muestra el inglés en grande y el español como traducción', async () => {
+  it('muestra el español en grande y el inglés pequeño debajo', async () => {
     const { store } = setup({
       phrases: [
         makePhrase({ numero: 1, en: 'Who looks after your dog?', es: '¿Quién cuida a tu perro?' }),
@@ -159,9 +159,9 @@ describe('PracticeStore', () => {
     await store.init();
     await flush();
 
-    // Una sola pantalla: inglés arriba, español debajo.
-    expect(store.text()).toBe('Who looks after your dog?');
-    expect(store.translation()).toBe('¿Quién cuida a tu perro?');
+    // Una sola pantalla: español arriba (grande), inglés debajo (pequeño).
+    expect(store.text()).toBe('¿Quién cuida a tu perro?');
+    expect(store.translation()).toBe('Who looks after your dog?');
   });
 
   it('reproduce el audio en inglés de la frase, del mazo actual', async () => {
@@ -177,7 +177,7 @@ describe('PracticeStore', () => {
     expect(audio.loadedDecks).toEqual(['home']);
   });
 
-  it('frase sin traducción: se muestra el inglés y la traducción queda vacía', async () => {
+  it('frase sin español: el inglés sube a grande y abajo no se repite', async () => {
     const { store } = setup({
       phrases: [makePhrase({ numero: 1, en: 'No translation here.', es: null })],
     });

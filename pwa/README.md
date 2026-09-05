@@ -1,8 +1,8 @@
 # Shadow
 
 PWA móvil-first para practicar **shadowing** de inglés: una frase por pantalla en
-formato *stories*, con audio pregenerado que se reproduce solo, pensada para
-repetir en voz alta.
+formato *stories* (español en grande, inglés en pequeño debajo), con audio
+pregenerado en inglés que se reproduce solo, pensada para repetir en voz alta.
 
 > Angular 21 (standalone + signals) · arquitectura hexagonal · TypeScript strict ·
 > instalable y offline.

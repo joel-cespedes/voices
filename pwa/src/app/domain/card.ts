@@ -1,8 +1,8 @@
 /**
  * Domain: moving the cursor over the deck.
  *
- * Una frase = una pantalla. Se ve el inglés (grande) con su traducción al
- * español debajo; el audio es siempre la grabación en inglés. La navegación es
+ * Una frase = una pantalla. Se ve el español (grande) con el inglés debajo en
+ * pequeño; el audio es siempre la grabación en inglés. La navegación es
  * CIRCULAR: al pasar de la última frase se vuelve a la primera, para poder
  * repasar en bucle sin tener que retroceder todo el mazo.
  */

@@ -70,7 +70,7 @@
   gap: 16px;
 }
 
-/* Texto principal en pantalla: la frase en inglés, en grande y en blanco. */
+/* Texto principal en pantalla: la frase en español, en grande y en blanco. */
 .phrase {
   margin: 0;
   font-size: clamp(1.8rem, 7vw, 2.6rem);
@@ -87,9 +87,9 @@
   opacity: 0.55;
 }
 
-/* La traducción al español: debajo, más pequeña y atenuada. */
+/* El inglés (lo que suena): debajo, más pequeño, atenuado y bien separado. */
 .translation {
-  margin: -4px 0 0;
+  margin: 20px 0 0;
   font-size: clamp(1rem, 4vw, 1.3rem);
   font-weight: 500;
   line-height: 1.3;
