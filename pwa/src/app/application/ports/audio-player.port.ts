@@ -1,15 +1,18 @@
+import type { DeckId } from '../../domain/deck';
+
 /**
  * Port: audio playback. Implemented by infrastructure (e.g. HTMLAudioElement).
  *
- * The contract speaks in terms of an audio file name (`archivo`); resolving that
- * to a concrete URL is the adapter's concern, keeping the CDN out of the domain.
+ * The contract speaks in terms of an audio file name (`archivo`) within a deck;
+ * resolving that to a concrete URL is the adapter's concern, keeping the CDN
+ * out of the domain.
  */
 export interface AudioPlayerPort {
   /**
-   * Point the player at the given audio file and resolve once it is ready to
-   * play (or reject if it cannot be loaded). Does not start playback.
+   * Point the player at the given audio file of a deck and resolve once it is
+   * ready to play (or reject if it cannot be loaded). Does not start playback.
    */
-  load(archivo: string): Promise<void>;
+  load(archivo: string, deckId: DeckId): Promise<void>;
 
   /** Start (or resume) playback. Resolves when playback has begun. */
   play(): Promise<void>;

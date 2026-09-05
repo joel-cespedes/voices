@@ -33,6 +33,27 @@
   letter-spacing: 0.02em;
 }
 
+/* Lista actual (Home, Commons…): abre el menú de listas. */
+.deck-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.deck-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .stage {
   flex: 1;
   display: flex;

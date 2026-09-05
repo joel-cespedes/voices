@@ -2,6 +2,7 @@
  * Reusable in-memory test doubles for every port. Shared by unit tests so the
  * contracts have a single, consistent fake implementation.
  */
+import { DEFAULT_DECK_ID, type DeckId } from '../../domain/deck';
 import type { Phrase } from '../../domain/phrase';
 import type { Progress } from '../../domain/progress';
 import type { Settings } from '../../domain/settings';
@@ -9,6 +10,12 @@ import type { AudioPlayerPort } from '../ports/audio-player.port';
 import type { PhraseRepositoryPort } from '../ports/phrase-repository.port';
 import type { ProgressStoragePort } from '../ports/progress-storage.port';
 import type { SettingsPort } from '../ports/settings.port';
+
+function isPhraseList(
+  value: readonly Phrase[] | Record<DeckId, readonly Phrase[]>,
+): value is readonly Phrase[] {
+  return Array.isArray(value);
+}
 
 export function makePhrase(partial: Partial<Phrase> & { numero: number }): Phrase {
   return {
@@ -19,23 +26,37 @@ export function makePhrase(partial: Partial<Phrase> & { numero: number }): Phras
   };
 }
 
+/**
+ * Phrases per deck. A plain array is the default deck; a record serves several
+ * decks (unknown ids resolve to an empty deck).
+ */
 export class FakePhraseRepository implements PhraseRepositoryPort {
-  constructor(private readonly phrases: readonly Phrase[] = []) {}
-  loadAll(): Promise<readonly Phrase[]> {
-    return Promise.resolve(this.phrases);
+  private readonly decks: Record<DeckId, readonly Phrase[]>;
+  constructor(phrases: readonly Phrase[] | Record<DeckId, readonly Phrase[]> = []) {
+    this.decks = isPhraseList(phrases) ? { [DEFAULT_DECK_ID]: phrases } : phrases;
+  }
+  loadAll(deckId: DeckId): Promise<readonly Phrase[]> {
+    return Promise.resolve(this.decks[deckId] ?? []);
   }
 }
 
 export class FakeProgressStorage implements ProgressStoragePort {
-  saved: Progress | null = null;
-  constructor(initial: Progress | null = null) {
-    this.saved = initial;
+  readonly byDeck = new Map<DeckId, Progress>();
+  activeDeck: DeckId | null = null;
+  constructor(initial: Progress | null = null, deckId: DeckId = DEFAULT_DECK_ID) {
+    if (initial) this.byDeck.set(deckId, initial);
   }
-  load(): Progress | null {
-    return this.saved;
+  load(deckId: DeckId): Progress | null {
+    return this.byDeck.get(deckId) ?? null;
   }
-  save(progress: Progress): void {
-    this.saved = progress;
+  save(deckId: DeckId, progress: Progress): void {
+    this.byDeck.set(deckId, progress);
+  }
+  loadActiveDeck(): DeckId | null {
+    return this.activeDeck;
+  }
+  saveActiveDeck(deckId: DeckId): void {
+    this.activeDeck = deckId;
   }
 }
 
@@ -58,6 +79,7 @@ export class FakeSettingsStorage implements SettingsPort {
  */
 export class FakeAudioPlayer implements AudioPlayerPort {
   loaded: string[] = [];
+  loadedDecks: DeckId[] = [];
   playCount = 0;
   stopped = 0;
   paused = 0;
@@ -69,8 +91,9 @@ export class FakeAudioPlayer implements AudioPlayerPort {
   setDuration(ms: number | null): void {
     this.duration = ms;
   }
-  load(archivo: string): Promise<void> {
+  load(archivo: string, deckId: DeckId): Promise<void> {
     this.loaded.push(archivo);
+    this.loadedDecks.push(deckId);
     return Promise.resolve();
   }
   play(): Promise<void> {

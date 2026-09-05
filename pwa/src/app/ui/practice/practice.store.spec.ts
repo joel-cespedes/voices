@@ -22,15 +22,22 @@ import { PracticeStore } from './practice.store';
 
 const cdn: CdnConfig = {
   baseUrl: 'https://cdn.example/x@main',
-  indexPath: 'index.csv',
-  audioPath: 'audios',
   audioFormat: 'mp3',
+  decks: [
+    { id: 'home', label: 'Home', indexPath: 'index.csv', audioPath: 'audios/v2' },
+    { id: 'commons', label: 'Commons', indexPath: 'commons.csv', audioPath: 'audios/commons/v1' },
+  ],
 };
 
 const phrases = [
   makePhrase({ numero: 1, archivo: '0001.mp3' }),
   makePhrase({ numero: 2, archivo: '0002.mp3' }),
   makePhrase({ numero: 3, archivo: '0003.mp3' }),
+];
+
+const commons = [
+  makePhrase({ numero: 1, en: 'common one' }),
+  makePhrase({ numero: 2, en: 'common two' }),
 ];
 
 const flush = async (): Promise<void> => {
@@ -50,10 +57,10 @@ function setup(opts: {
   const audio = opts.audio ?? new FakeAudioPlayer();
   const progress = opts.progress ?? new FakeProgressStorage();
   const settings = opts.settings ?? new FakeSettingsStorage();
-  const deck = opts.phrases ?? phrases;
+  const repository = new FakePhraseRepository({ home: opts.phrases ?? phrases, commons });
   TestBed.configureTestingModule({
     providers: [
-      { provide: PHRASE_REPOSITORY, useValue: new FakePhraseRepository(deck) },
+      { provide: PHRASE_REPOSITORY, useValue: repository },
       { provide: AUDIO_PLAYER, useValue: audio },
       { provide: PROGRESS_STORAGE, useValue: progress },
       { provide: SETTINGS_STORAGE, useValue: settings },
@@ -140,7 +147,7 @@ describe('PracticeStore', () => {
     await flush();
     store.next();
     expect(store.index()).toBe(1);
-    expect(progress.saved).toEqual({ currentIndex: 1 });
+    expect(progress.load('home')).toEqual({ currentIndex: 1 });
   });
 
   it('muestra el inglés en grande y el español como traducción', async () => {
@@ -157,7 +164,7 @@ describe('PracticeStore', () => {
     expect(store.translation()).toBe('¿Quién cuida a tu perro?');
   });
 
-  it('reproduce el audio en inglés de la frase', async () => {
+  it('reproduce el audio en inglés de la frase, del mazo actual', async () => {
     const { store, audio } = setup({
       phrases: [makePhrase({ numero: 1, archivo: '0001.mp3', en: 'I can handle it.', es: 'Puedo hacerlo yo.' })],
     });
@@ -167,6 +174,7 @@ describe('PracticeStore', () => {
     store.togglePlay();
     await flush();
     expect(audio.loaded).toEqual(['0001.mp3']);
+    expect(audio.loadedDecks).toEqual(['home']);
   });
 
   it('frase sin traducción: se muestra el inglés y la traducción queda vacía', async () => {
@@ -178,5 +186,79 @@ describe('PracticeStore', () => {
 
     expect(store.text()).toBe('No translation here.');
     expect(store.translation()).toBe('');
+  });
+
+  describe('listas (decks)', () => {
+    it('arranca en Home y expone las listas del menú', async () => {
+      const { store } = setup({});
+      await store.init();
+      await flush();
+      expect(store.deck()).toEqual({ id: 'home', label: 'Home', indexPath: 'index.csv', audioPath: 'audios/v2' });
+      expect(store.decks.map((d) => d.label)).toEqual(['Home', 'Commons']);
+    });
+
+    it('cambiar de lista corta el audio, carga sus frases y recuerda la elección', async () => {
+      const { store, audio, progress } = setup({});
+      await store.init();
+      await flush();
+      store.next(); // suena Home
+      await flush();
+      const stoppedBefore = audio.stopped;
+
+      await store.selectDeck('commons');
+      await flush();
+
+      expect(audio.stopped).toBeGreaterThan(stoppedBefore);
+      expect(store.deckId()).toBe('commons');
+      expect(store.total()).toBe(2);
+      expect(store.text()).toBe('common one');
+      expect(store.status()).toBe('idle'); // como al abrir: no suena sola
+      expect(progress.activeDeck).toBe('commons');
+    });
+
+    it('cada lista guarda su propia posición y se retoma al volver', async () => {
+      const { store, audio } = setup({});
+      await store.init();
+      await flush();
+      store.next();
+      store.next(); // Home en la 3a
+      await flush();
+
+      await store.selectDeck('commons');
+      await flush();
+      expect(store.index()).toBe(0);
+      store.next(); // Commons en la 2a; el audio es el de Commons
+      await flush();
+      expect(audio.loadedDecks.at(-1)).toBe('commons');
+
+      await store.selectDeck('home');
+      await flush();
+      expect(store.index()).toBe(2);
+      expect(store.current()?.numero).toBe(3);
+
+      await store.selectDeck('commons');
+      await flush();
+      expect(store.index()).toBe(1);
+    });
+
+    it('al abrir vuelve a la última lista practicada', async () => {
+      const progress = new FakeProgressStorage({ currentIndex: 1 }, 'commons');
+      progress.saveActiveDeck('commons');
+      const { store } = setup({ progress });
+      await store.init();
+      await flush();
+      expect(store.deckId()).toBe('commons');
+      expect(store.text()).toBe('common two');
+    });
+
+    it('una lista guardada que ya no existe cae a la primera', async () => {
+      const progress = new FakeProgressStorage();
+      progress.saveActiveDeck('borrada');
+      const { store } = setup({ progress });
+      await store.init();
+      await flush();
+      expect(store.deckId()).toBe('home');
+      expect(store.loadPhase()).toBe('ready');
+    });
   });
 });

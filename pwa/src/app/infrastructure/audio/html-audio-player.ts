@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import type { DeckId } from '../../domain/deck';
 import type { AudioPlayerPort } from '../../application/ports/audio-player.port';
 import { CDN_CONFIG } from '../../core/di/tokens';
 import { audioUrl, type CdnConfig } from '../../core/config/cdn-config';
@@ -6,8 +7,8 @@ import { audioUrl, type CdnConfig } from '../../core/config/cdn-config';
 /**
  * Adapter: AudioPlayerPort backed by a single HTMLAudioElement.
  *
- * Resolves an `archivo` name to a CDN URL using the injected config, so the
- * port stays unaware of where audio is hosted.
+ * Resolves an `archivo` name within a deck to a CDN URL using the injected
+ * config, so the port stays unaware of where audio is hosted.
  */
 @Injectable()
 export class HtmlAudioPlayer implements AudioPlayerPort {
@@ -26,7 +27,7 @@ export class HtmlAudioPlayer implements AudioPlayerPort {
     });
   }
 
-  load(archivo: string): Promise<void> {
+  load(archivo: string, deckId: DeckId): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const onReady = (): void => {
         cleanup();
@@ -44,7 +45,7 @@ export class HtmlAudioPlayer implements AudioPlayerPort {
       this.audio.addEventListener('canplaythrough', onReady, { once: true });
       this.audio.addEventListener('loadeddata', onReady, { once: true });
       this.audio.addEventListener('error', onError, { once: true });
-      this.audio.src = audioUrl(this.cfg, archivo);
+      this.audio.src = audioUrl(this.cfg, deckId, archivo);
       this.audio.load();
     });
   }

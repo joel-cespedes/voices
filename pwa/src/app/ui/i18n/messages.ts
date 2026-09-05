@@ -16,6 +16,7 @@ export type MessageKey =
   | 'play'
   | 'pause'
   | 'settings'
+  | 'lists'
   | 'close'
   | 'shadowingNow'
   | 'speed'
@@ -38,6 +39,7 @@ export const MESSAGES: Record<UiLocale, Catalog> = {
     play: 'Reproducir',
     pause: 'Pausar',
     settings: 'Ajustes',
+    lists: 'Listas',
     close: 'Cerrar',
     shadowingNow: 'Repite en voz alta',
     speed: 'Velocidad',
@@ -57,6 +59,7 @@ export const MESSAGES: Record<UiLocale, Catalog> = {
     play: 'Play',
     pause: 'Pause',
     settings: 'Settings',
+    lists: 'Lists',
     close: 'Close',
     shadowingNow: 'Repeat out loud',
     speed: 'Speed',

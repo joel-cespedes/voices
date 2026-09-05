@@ -7,7 +7,13 @@
       "installMode": "prefetch",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["/favicon.ico", "/index.html", "/manifest.webmanifest", "/*.css", "/*.js"]
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
       }
     },
     {
@@ -15,24 +21,32 @@
       "installMode": "lazy",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["/icons/**", "/media/**"]
+        "files": [
+          "/icons/**",
+          "/media/**"
+        ]
       }
     }
   ],
   "dataGroups": [
     {
       "name": "phrase-index",
-      "urls": ["https://cdn.jsdelivr.net/gh/joel-cespedes/voices@main/index.csv"],
+      "urls": [
+        "https://cdn.jsdelivr.net/gh/joel-cespedes/voices@main/index.csv",
+        "https://cdn.jsdelivr.net/gh/joel-cespedes/voices@main/commons.csv"
+      ],
       "cacheConfig": {
         "strategy": "freshness",
-        "maxSize": 4,
+        "maxSize": 8,
         "maxAge": "30d",
         "timeout": "5s"
       }
     },
     {
       "name": "audio",
-      "urls": ["https://cdn.jsdelivr.net/gh/joel-cespedes/voices@main/audios/**"],
+      "urls": [
+        "https://cdn.jsdelivr.net/gh/joel-cespedes/voices@main/audios/**"
+      ],
       "cacheConfig": {
         "strategy": "performance",
         "maxSize": 700,

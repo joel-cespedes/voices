@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import type { DeckId } from '../../domain/deck';
 import type { Phrase } from '../../domain/phrase';
 import type { PhraseRepositoryPort } from '../../application/ports/phrase-repository.port';
 import { CDN_CONFIG } from '../../core/di/tokens';
@@ -6,7 +7,8 @@ import { indexUrl, normalizeArchivo, type CdnConfig } from '../../core/config/cd
 import { parseCsv, type CsvRow } from '../csv/csv-parser';
 
 /**
- * Adapter: loads phrases from a CSV index served over a CDN (jsDelivr).
+ * Adapter: loads the phrases of a deck from its CSV index served over a CDN
+ * (jsDelivr). Which CSV belongs to which deck comes from the CDN config.
  *
  * Tolerant to the real-world schema: the English text may live in an `en` or a
  * `texto` column, and the Spanish `es` column may be missing or empty. Audio
@@ -16,10 +18,10 @@ import { parseCsv, type CsvRow } from '../csv/csv-parser';
 export class JsDelivrCsvPhraseRepository implements PhraseRepositoryPort {
   private readonly cfg = inject<CdnConfig>(CDN_CONFIG);
 
-  async loadAll(): Promise<readonly Phrase[]> {
+  async loadAll(deckId: DeckId): Promise<readonly Phrase[]> {
     // Revalidate so translation/index updates propagate; the service worker
     // still provides the cached index when offline.
-    const response = await fetch(indexUrl(this.cfg), { cache: 'no-cache' });
+    const response = await fetch(indexUrl(this.cfg, deckId), { cache: 'no-cache' });
     if (!response.ok) {
       throw new Error(`Failed to load phrase index: HTTP ${response.status}`);
     }

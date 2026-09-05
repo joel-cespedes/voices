@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
+import { DEFAULT_DECK_ID, type Deck, type DeckId } from '../../domain/deck';
 import type { Phrase } from '../../domain/phrase';
 import { nextIndex, previousIndex } from '../../domain/card';
 import {
@@ -14,6 +15,7 @@ import { progressRatio, REPEAT_GAP_MS } from '../../domain/rules';
 import { LoadPhrases } from '../../application/use-cases/load-phrases';
 import { GoToPhrase } from '../../application/use-cases/navigate-session';
 import { RepeatCurrent } from '../../application/use-cases/repeat-current';
+import { SelectDeck } from '../../application/use-cases/select-deck';
 import { UpdateSettings } from '../../application/use-cases/update-settings';
 
 import {
@@ -23,7 +25,7 @@ import {
   PROGRESS_STORAGE,
   SETTINGS_STORAGE,
 } from '../../core/di/tokens';
-import { audioUrl } from '../../core/config/cdn-config';
+import { audioUrl, resolveDeck } from '../../core/config/cdn-config';
 
 export type LoadPhase = 'loading' | 'ready' | 'error';
 
@@ -46,8 +48,10 @@ export class PracticeStore {
   private readonly gotoUC = new GoToPhrase(this.progressStore);
   private readonly repeatUC = new RepeatCurrent();
   private readonly updateUC = new UpdateSettings(this.settingsStore);
+  private readonly selectDeckUC = new SelectDeck(this.progressStore);
 
   // --- State ---------------------------------------------------------------
+  private readonly _deckId = signal<DeckId>(DEFAULT_DECK_ID);
   private readonly _phrases = signal<readonly Phrase[]>([]);
   private readonly _index = signal(0);
   private readonly _settings = signal<Settings>(DEFAULT_SETTINGS);
@@ -58,6 +62,12 @@ export class PracticeStore {
   private readonly _blocked = signal(false);
 
   // --- Public read models --------------------------------------------------
+  /** Listas disponibles, en el orden del menú. */
+  readonly decks: readonly Deck[] = this.cdn.decks;
+  readonly deckId = this._deckId.asReadonly();
+  /** Lista que se está practicando. */
+  readonly deck = computed<Deck>(() => resolveDeck(this.cdn, this._deckId()));
+
   readonly settings = this._settings.asReadonly();
   readonly loadPhase = this._loadPhase.asReadonly();
   readonly status = this._status.asReadonly();
@@ -67,7 +77,7 @@ export class PracticeStore {
   readonly total = computed(() => this._phrases().length);
 
   readonly current = computed<Phrase | null>(() =>
-    domainCurrent(createSession(this._phrases(), this._index())),
+    domainCurrent(createSession(this._phrases(), this._index(), this._deckId())),
   );
   readonly progress = computed(() => progressRatio(this._index(), this.total()));
   readonly isPlaying = computed(() => this._status() === 'playing');
@@ -82,6 +92,8 @@ export class PracticeStore {
   private pauseTimer: ReturnType<typeof setTimeout> | null = null;
   private disposeEnded: (() => void) | null = null;
   private disposeError: (() => void) | null = null;
+  /** Descarta la respuesta de una carga que ya no es la última pedida. */
+  private loadSeq = 0;
 
   constructor() {
     this.disposeEnded = this.audio.onEnded(() => this.handleEnded());
@@ -90,24 +102,14 @@ export class PracticeStore {
 
   // --- Lifecycle -----------------------------------------------------------
 
-  /** Load settings + progress + phrases, then autoplay the current phrase. */
+  /** Load settings, then the last practiced deck with its saved position. */
   async init(): Promise<void> {
     this._settings.set(this.settingsStore.load() ?? DEFAULT_SETTINGS);
     this.audio.setPlaybackRate(this._settings().playbackRate);
 
-    this._loadPhase.set('loading');
-    try {
-      const phrases = await this.loadPhrases.execute();
-      this._phrases.set(phrases);
-      const saved = this.progressStore.load();
-      this.setIndex(saved?.currentIndex ?? 0);
-      this._loadPhase.set('ready');
-      // Al abrir no suena solo: el navegador bloquea el autoplay sin un gesto.
-      // El audio arranca cuando el usuario cambia de frase o pulsa play.
-      this._status.set('idle');
-    } catch {
-      this._loadPhase.set('error');
-    }
+    // Un mazo guardado que ya no exista cae al primero configurado.
+    const wanted = this.progressStore.loadActiveDeck() ?? DEFAULT_DECK_ID;
+    await this.loadDeck(resolveDeck(this.cdn, wanted).id);
   }
 
   dispose(): void {
@@ -115,6 +117,23 @@ export class PracticeStore {
     this.audio.stop();
     this.disposeEnded?.();
     this.disposeError?.();
+  }
+
+  // --- Decks ---------------------------------------------------------------
+
+  /**
+   * Cambia de lista. Se corta lo que suene, se recuerda la elección y se
+   * retoma esa lista en la frase donde se dejó. Como al abrir la app, no suena
+   * sola: el audio arranca al cambiar de frase o pulsar play.
+   */
+  async selectDeck(deckId: DeckId): Promise<void> {
+    const id = resolveDeck(this.cdn, deckId).id;
+    if (id === this._deckId() && this._loadPhase() === 'ready') return;
+    this.clearTimer();
+    this.audio.stop();
+    this._repetition.set(0);
+    this.selectDeckUC.execute(id);
+    await this.loadDeck(id);
   }
 
   // --- Playback ------------------------------------------------------------
@@ -128,7 +147,7 @@ export class PracticeStore {
     this._status.set('loading');
     this.audio.setPlaybackRate(this._settings().playbackRate);
     try {
-      await this.audio.load(phrase.archivo);
+      await this.audio.load(phrase.archivo, this._deckId());
       await this.audio.play();
       this._blocked.set(false);
       this._status.set('playing');
@@ -147,9 +166,7 @@ export class PracticeStore {
 
   /** Replay the current phrase's audio (resets repetitions). */
   repeat(): void {
-    const phrase = this.repeatUC.execute(
-      createSession(this._phrases(), this._index()),
-    );
+    const phrase = this.repeatUC.execute(this.session());
     if (!phrase) return;
     void this.playCurrent();
   }
@@ -206,23 +223,23 @@ export class PracticeStore {
     this._settings.set(this.updateUC.execute(this._settings(), { translationLang }));
   }
 
-
   // --- Offline prefetch ----------------------------------------------------
 
   /**
-   * Warm the cache (service worker) for a range of phrases by fetching their
-   * audio URLs. Best-effort: failures are ignored. Indices are inclusive and
-   * clamped to the deck.
+   * Warm the cache (service worker) for a range of phrases of the current deck
+   * by fetching their audio URLs. Best-effort: failures are ignored. Indices
+   * are inclusive and clamped to the deck.
    */
   async prefetchRange(from: number, to: number): Promise<void> {
     const phrases = this._phrases();
+    const deckId = this._deckId();
     const start = Math.max(0, Math.min(from, to));
     const end = Math.min(phrases.length - 1, Math.max(from, to));
     for (let i = start; i <= end; i++) {
       const phrase = phrases[i];
       if (!phrase) continue;
       try {
-        await fetch(audioUrl(this.cdn, phrase.archivo), { cache: 'force-cache' });
+        await fetch(audioUrl(this.cdn, deckId, phrase.archivo), { cache: 'force-cache' });
       } catch {
         // Ignore individual failures.
       }
@@ -233,7 +250,27 @@ export class PracticeStore {
 
   /** La sesión de dominio correspondiente al estado actual. */
   private session(): PracticeSession {
-    return createSession(this._phrases(), this._index());
+    return createSession(this._phrases(), this._index(), this._deckId());
+  }
+
+  /** Carga las frases de un mazo y retoma la posición guardada en él. */
+  private async loadDeck(deckId: DeckId): Promise<void> {
+    const seq = ++this.loadSeq;
+    this._deckId.set(deckId);
+    this._loadPhase.set('loading');
+    try {
+      const phrases = await this.loadPhrases.execute(deckId);
+      if (seq !== this.loadSeq) return; // el usuario ya pidió otro mazo
+      this._phrases.set(phrases);
+      this.setIndex(this.progressStore.load(deckId)?.currentIndex ?? 0);
+      this._loadPhase.set('ready');
+      // Al abrir no suena solo: el navegador bloquea el autoplay sin un gesto.
+      // El audio arranca cuando el usuario cambia de frase o pulsa play.
+      this._status.set('idle');
+    } catch {
+      if (seq !== this.loadSeq) return;
+      this._loadPhase.set('error');
+    }
   }
 
   /**
@@ -244,7 +281,7 @@ export class PracticeStore {
   private moveTo(index: number): void {
     this.clearTimer();
     this.audio.stop();
-    // El caso de uso persiste la posición y aplica el clamp del dominio.
+    // El caso de uso persiste la posición (en el mazo actual) y aplica el clamp.
     const session = this.gotoUC.execute(this.session(), index);
     this.setIndex(session.index);
     void this.playCurrent();

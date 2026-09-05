@@ -1,0 +1,35 @@
+@if (open()) {
+  <div class="backdrop" (click)="closed.emit()" aria-hidden="true"></div>
+  <section
+    class="sheet"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="i18n.t('lists')"
+  >
+    <header class="sheet-header">
+      <h2>{{ i18n.t('lists') }}</h2>
+      <button type="button" class="icon-btn" (click)="closed.emit()">
+        {{ i18n.t('close') }}
+      </button>
+    </header>
+
+    <ul class="decks">
+      @for (deck of store.decks; track deck.id) {
+        <li>
+          <button
+            type="button"
+            class="deck"
+            [class.active]="deck.id === store.deckId()"
+            [attr.aria-current]="deck.id === store.deckId() ? 'true' : null"
+            (click)="select(deck.id)"
+          >
+            <span class="name">{{ deck.label }}</span>
+            @if (deck.id === store.deckId()) {
+              <span class="check" aria-hidden="true">✓</span>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+}

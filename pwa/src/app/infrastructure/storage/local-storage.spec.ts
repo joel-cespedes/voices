@@ -8,16 +8,39 @@ beforeEach(() => {
 });
 
 describe('LocalStorageProgress', () => {
-  it('round-trips progress', () => {
+  it('round-trips progress per deck', () => {
     const store = new LocalStorageProgress();
-    expect(store.load()).toBeNull();
-    store.save({ currentIndex: 42 });
-    expect(store.load()).toEqual({ currentIndex: 42 });
+    expect(store.load('home')).toBeNull();
+    store.save('home', { currentIndex: 42 });
+    store.save('commons', { currentIndex: 7 });
+    expect(store.load('home')).toEqual({ currentIndex: 42 });
+    expect(store.load('commons')).toEqual({ currentIndex: 7 });
+  });
+
+  it('round-trips the active deck without touching positions', () => {
+    const store = new LocalStorageProgress();
+    expect(store.loadActiveDeck()).toBeNull();
+    store.save('home', { currentIndex: 3 });
+    store.saveActiveDeck('commons');
+    expect(store.loadActiveDeck()).toBe('commons');
+    expect(store.load('home')).toEqual({ currentIndex: 3 });
+  });
+
+  it('falls back to the v2 (single-deck) position for Home only', () => {
+    globalThis.localStorage.setItem('shadow.progress.v2', '{"currentIndex":12}');
+    const store = new LocalStorageProgress();
+    expect(store.load('home')).toEqual({ currentIndex: 12 });
+    expect(store.load('commons')).toBeNull();
   });
 
   it('ignores malformed data', () => {
-    globalThis.localStorage.setItem('shadow.progress.v2', '{"currentIndex":"nope"}');
-    expect(new LocalStorageProgress().load()).toBeNull();
+    globalThis.localStorage.setItem(
+      'shadow.progress.v3',
+      '{"activeDeck":5,"decks":{"home":{"currentIndex":"nope"}}}',
+    );
+    const store = new LocalStorageProgress();
+    expect(store.load('home')).toBeNull();
+    expect(store.loadActiveDeck()).toBeNull();
   });
 });
 

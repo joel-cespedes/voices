@@ -11,6 +11,10 @@ PWA móvil-first para practicar *shadowing* de inglés. Una frase por pantalla
 que el usuario repita en voz alta antes de pasar a la siguiente. Datos (índice
 CSV + audios) servidos por CDN (jsDelivr sobre GitHub).
 
+Las frases se agrupan en **listas** (`Deck`: Home, Commons…), cada una con su
+CSV y su carpeta de audios. Se cambia de lista desde el menú ☰; la posición se
+guarda **por lista**.
+
 ## Arquitectura: hexagonal (puertos y adaptadores)
 
 Las dependencias **apuntan solo hacia el dominio**:
@@ -24,11 +28,11 @@ ui ──▶ application ──▶ domain ◀── infrastructure
 
 | Capa              | Carpeta            | Responsabilidad                                                        | Puede importar             |
 | ----------------- | ------------------ | ---------------------------------------------------------------------- | -------------------------- |
-| **domain**        | `domain/`          | Entidades y reglas puras: `Phrase`, `PracticeSession`, `PlaybackState`, `Progress`, `Settings`, `rules` (clamp, cálculo de pausa, ratio). | nada (TS puro)             |
+| **domain**        | `domain/`          | Entidades y reglas puras: `Deck`, `Phrase`, `PracticeSession`, `PlaybackState`, `Progress`, `Settings`, `rules` (clamp, cálculo de pausa, ratio). | nada (TS puro)             |
 | **application**   | `application/`     | Casos de uso (`use-cases/`) + **puertos** (`ports/`) + dobles de test (`testing/`). | solo `domain`              |
 | **infrastructure**| `infrastructure/`  | Adaptadores que implementan los puertos: `JsDelivrCsvPhraseRepository`, `HtmlAudioPlayer`, `LocalStorageProgress`, `LocalStorageSettings`, `csv-parser`. | `domain`, `application`, Angular `@Injectable`, `core/` |
-| **ui**            | `ui/`              | Componentes Angular (standalone + signals): `practice/` (vista stories + `PracticeStore`), `settings-sheet/`, `components/`, `i18n/`. | `application`, `domain` (tipos), `core/di` (tokens) |
-| **core**          | `core/`            | `config/` (`CdnConfig`) y `di/tokens.ts` (un token por puerto).        | `domain`, `application`    |
+| **ui**            | `ui/`              | Componentes Angular (standalone + signals): `practice/` (vista stories + `PracticeStore`), `deck-menu/` (menú de listas), `settings-sheet/`, `components/`, `i18n/`. | `application`, `domain` (tipos), `core/di` (tokens) |
+| **core**          | `core/`            | `config/` (`CdnConfig`: base del CDN + lista de `decks` con su CSV y carpeta de audios) y `di/tokens.ts` (un token por puerto). | `domain`, `application`    |
 
 ### Wiring de DI (composición)
 
@@ -119,10 +123,21 @@ npm run format     # Prettier
 - **Textos de la interfaz**: añade un locale en `ui/i18n/messages.ts` (`MESSAGES`)
   y selecciónalo con `I18nService.setLocale()`.
 
+### Añadir una lista de frases (deck)
+
+1. En el repo de datos: nuevo Excel en `tts/` y una entrada en `DECKS`
+   (`tts/phrases.py`). `./update.sh` genera su CSV y sus audios.
+2. Aquí: una entrada más en `decks` de `src/environments/environment.ts` y
+   `environment.prod.ts` con el **mismo `id`**, su `indexPath` y su `audioPath`.
+3. Añade su CSV a `dataGroups.phrase-index` en `ngsw-config.json` (offline).
+4. Nada más cambia: el menú, el progreso por lista y la reproducción salen solos
+   de la config. `label` es un nombre propio (no pasa por i18n).
+
 ### Cambiar el CDN / entorno
 
 Edita `src/environments/environment.ts` (dev) y `environment.prod.ts` (prod):
-`baseUrl`, `indexPath`, `audioPath`, `audioFormat`. Nada más cambia.
+`baseUrl`, `audioFormat` y, por cada deck, `indexPath` y `audioPath`. Nada más
+cambia.
 
 ## Decisiones de arquitectura
 

@@ -36,6 +36,8 @@ GitHub). No necesitas servir los audios localmente.
 
 ## Cómo se usa
 
+- **Listas** (☰, arriba a la izquierda): Home y Commons. Misma pantalla, otras
+  frases; cada lista recuerda por dónde ibas.
 - **Swipe** izquierda/derecha o **tap** en los laterales para avanzar/retroceder.
 - Botones inferiores: anterior, repetir audio, play/pausa, traducción, siguiente.
 - **Teclado**: `←`/`→` navegan, `Espacio` play/pausa, `R` repite, `Esc` cierra ajustes.
@@ -45,7 +47,7 @@ GitHub). No necesitas servir los audios localmente.
 
 ## Datos
 
-El índice (`index.csv`) y los audios viven en el repo
+Los índices (`index.csv` para Home, `commons.csv` para Commons) y los audios viven en el repo
 [`joel-cespedes/voices`](https://github.com/joel-cespedes/voices) y se sirven por
 CDN. La base del CDN es **configurable por entorno** en
 `src/environments/environment.ts` (token de DI `CDN_CONFIG`), nunca hardcodeada en

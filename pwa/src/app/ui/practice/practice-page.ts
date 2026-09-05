@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 
 import { ProgressBar } from '../components/progress-bar';
+import { DeckMenu } from '../deck-menu/deck-menu';
 import { SettingsSheet } from '../settings-sheet/settings-sheet';
 import { I18nService } from '../i18n/i18n.service';
 import { PracticeStore } from './practice.store';
@@ -22,7 +23,7 @@ const SWIPE_THRESHOLD_PX = 48;
 @Component({
   selector: 'app-practice',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ProgressBar, SettingsSheet],
+  imports: [ProgressBar, DeckMenu, SettingsSheet],
   templateUrl: './practice-page.html',
   styleUrl: './practice-page.css',
   host: {
@@ -33,6 +34,7 @@ export class PracticePage implements OnInit, OnDestroy {
   protected readonly store = inject(PracticeStore);
   protected readonly i18n = inject(I18nService);
   protected readonly settingsOpen = signal(false);
+  protected readonly menuOpen = signal(false);
 
   private touchStartX: number | null = null;
   private touchStartY: number | null = null;
@@ -51,6 +53,14 @@ export class PracticePage implements OnInit, OnDestroy {
 
   protected closeSettings(): void {
     this.settingsOpen.set(false);
+  }
+
+  protected openMenu(): void {
+    this.menuOpen.set(true);
+  }
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
   }
 
   // --- Touch (swipe) -------------------------------------------------------
@@ -75,8 +85,11 @@ export class PracticePage implements OnInit, OnDestroy {
 
   // --- Keyboard ------------------------------------------------------------
   protected onKey(event: KeyboardEvent): void {
-    if (this.settingsOpen()) {
-      if (event.key === 'Escape') this.closeSettings();
+    if (this.settingsOpen() || this.menuOpen()) {
+      if (event.key === 'Escape') {
+        this.closeSettings();
+        this.closeMenu();
+      }
       return;
     }
     switch (event.key) {

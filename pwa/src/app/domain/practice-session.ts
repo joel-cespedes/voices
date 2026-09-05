@@ -2,11 +2,14 @@
  * Domain entity: a practice session over an ordered deck of phrases.
  *
  * Immutable. All navigation returns a new session; the index is always clamped
- * to a valid range so the UI can never point outside the deck.
+ * to a valid range so the UI can never point outside the deck. The session
+ * remembers WHICH deck it runs on, so progress is persisted per deck.
  */
+import { DEFAULT_DECK_ID, type DeckId } from './deck';
 import type { Phrase } from './phrase';
 
 export interface PracticeSession {
+  readonly deckId: DeckId;
   readonly phrases: readonly Phrase[];
   readonly index: number;
 }
@@ -20,8 +23,9 @@ function clampIndex(index: number, length: number): number {
 export function createSession(
   phrases: readonly Phrase[],
   startIndex = 0,
+  deckId: DeckId = DEFAULT_DECK_ID,
 ): PracticeSession {
-  return { phrases, index: clampIndex(startIndex, phrases.length) };
+  return { deckId, phrases, index: clampIndex(startIndex, phrases.length) };
 }
 
 export function total(session: PracticeSession): number {

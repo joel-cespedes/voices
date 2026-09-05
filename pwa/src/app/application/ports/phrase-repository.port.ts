@@ -1,3 +1,4 @@
+import type { DeckId } from '../../domain/deck';
 import type { Phrase } from '../../domain/phrase';
 
 /**
@@ -6,6 +7,6 @@ import type { Phrase } from '../../domain/phrase';
  * contract, never on how or where the data lives.
  */
 export interface PhraseRepositoryPort {
-  /** Load the full, ordered deck of phrases. */
-  loadAll(): Promise<readonly Phrase[]>;
+  /** Load the full, ordered phrases of one deck. */
+  loadAll(deckId: DeckId): Promise<readonly Phrase[]>;
 }

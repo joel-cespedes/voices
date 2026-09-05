@@ -3,6 +3,16 @@
   <header class="top">
     <app-progress-bar [ratio]="store.progress()" />
     <div class="meta">
+      <!-- Lista actual; abre el menú de listas -->
+      <button
+        type="button"
+        class="deck-btn"
+        [attr.aria-label]="i18n.t('lists')"
+        (click)="openMenu()"
+      >
+        <span class="deck-icon" aria-hidden="true">☰</span>
+        <span class="deck-name">{{ store.deck().label }}</span>
+      </button>
       <span class="counter" aria-live="polite">
         {{ i18n.t('counter') }} {{ store.index() + 1 }} / {{ store.total() }}
       </span>
@@ -87,5 +97,6 @@
     <button type="button" class="icon-btn" [attr.aria-label]="i18n.t('next')" (click)="store.next()">⏭</button>
   </footer>
 
+  <app-deck-menu [open]="menuOpen()" (closed)="closeMenu()" />
   <app-settings-sheet [open]="settingsOpen()" (closed)="closeSettings()" />
 </div>

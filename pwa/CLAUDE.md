@@ -41,11 +41,11 @@ npm run e2e      # e2e (Playwright)
 
 ```
 src/app/
-  domain/         Phrase, PracticeSession, PlaybackState, Progress, Settings, rules
+  domain/         Deck, Phrase, PracticeSession, PlaybackState, Progress, Settings, rules
   application/    use-cases/ + ports/ + testing/ (fakes)
   infrastructure/ JsDelivrCsvPhraseRepository, HtmlAudioPlayer, LocalStorage*, csv-parser
-  ui/             practice/ (vista + PracticeStore), settings-sheet/, components/, i18n/
-  core/           config/ (CdnConfig) + di/tokens.ts
+  ui/             practice/ (vista + PracticeStore), deck-menu/, settings-sheet/, components/, i18n/
+  core/           config/ (CdnConfig + decks) + di/tokens.ts
   app.config.ts   composición: puertos → adaptadores (ÚNICO sitio)
 ```
 
